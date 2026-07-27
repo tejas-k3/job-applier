@@ -1,23 +1,39 @@
 # Job Applier
 
-Workday-first Chrome extension for filling repeated application details from one candidate profile and a PDF resume. It does not submit applications.
+Workday-first Chrome extension for filling repeated application details from one candidate profile and PDF resume. It never clicks Submit.
 
-## Run locally
+## Use it locally
 
 ```bash
+git clone git@github.com:tejas-k3/job-applier.git
+cd job-applier
 npm install
 npm run dev
 ```
 
-Load the generated Chrome extension, open its side panel, save the candidate-profile JSON, choose a PDF resume, then use **Fill visible page** on a supported job tab.
+1. Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select `.output/chrome-mv3`.
+2. Open the Job Applier side panel from Chrome’s toolbar.
+3. Paste/edit the source-of-truth profile JSON. Start from [`docs/candidate-profile.example.json`](docs/candidate-profile.example.json).
+4. Click **Save profile**, select your PDF resume, and open a supported job application.
+5. With that application tab active, click **Start background fill**. You may now work in another tab.
+6. The queue displays whether the run is filling, waiting for a required answer, ready for review, or failed with the exact reason.
+7. Review the completed application and submit it yourself.
 
-## Current scope
+## What it supports now
 
-- Stores one candidate profile locally.
-- Saves one PDF resume in extension IndexedDB and attempts to upload it to visible application file inputs.
-- Fills common identity/contact/link fields and enabled pre-approved declaration rules.
-- Includes Workday, Lever, Greenhouse, and Ashby URL matching; Workday is the initial focus.
-- Credentials/environment-variable login is intentionally not implemented. A future native companion will own that boundary.
-- LinkedIn automation is intentionally excluded.
+- Workday hosted external applications, plus hosted Lever, Greenhouse, and Ashby pages.
+- Background run persistence across ordinary navigation and Workday SPA stage changes.
+- Verified identity/contact/link/city/country fields, native select controls, and PDF resume upload.
+- Candidate-approved stable declaration rules.
+- A hard stop for authentication, CAPTCHA, MFA, email verification, unknown required data, and unrecognized declarations.
 
-The extension stops for authentication, CAPTCHA, MFA, verification links/codes, unknown required fields, and unrecognized legal declarations.
+## Commands
+
+```bash
+npm run typecheck
+npm test
+npm run build
+npm run zip
+```
+
+The extension stores the profile and resume only in Chrome’s local extension storage. Environment-variable login and a static-path PDF companion remain intentionally unimplemented stubs. LinkedIn automation is intentionally excluded.
