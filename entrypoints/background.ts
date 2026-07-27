@@ -8,7 +8,14 @@ async function fillTab(tabId: number, url = '') {
   if (!profile) return { ok: false, error: 'Save your candidate profile first.' };
   const resume = await getResume();
   await upsertRun({ tabId, url, provider: detectProvider(url), status: 'filling', message: 'Inspecting visible fields', updatedAt: new Date().toISOString() });
-  const response = await chrome.tabs.sendMessage(tabId, { type: 'FILL_WORKDAY', profile, resume });
+  let response: unknown;
+  try {
+    response = await chrome.tabs.sendMessage(tabId, { type: 'FILL_WORKDAY', profile, resume });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Could not connect to this application page';
+    await upsertRun({ tabId, url, provider: detectProvider(url), status: 'failed', message, updatedAt: new Date().toISOString() });
+    return { ok: false, error: message };
+  }
   const report = response as { ok: boolean; report?: string[]; nextAction?: 'advanced' | 'review' | 'waiting'; error?: string };
   await upsertRun({
     tabId, url, provider: detectProvider(url),
