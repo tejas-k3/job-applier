@@ -10,7 +10,20 @@ export default defineContentScript({
     'https://jobs.ashbyhq.com/*'
   ],
   main() {
-    chrome.runtime.sendMessage({ type: 'PAGE_READY' }).catch(() => undefined);
+    let lastStage = stageFingerprint();
+    const notifyPageReady = () => chrome.runtime.sendMessage({ type: 'PAGE_READY' }).catch(() => undefined);
+    notifyPageReady();
+    let pendingCheck: number | undefined;
+    new MutationObserver(() => {
+      window.clearTimeout(pendingCheck);
+      pendingCheck = window.setTimeout(() => {
+        const stage = stageFingerprint();
+        if (stage !== lastStage) {
+          lastStage = stage;
+          notifyPageReady();
+        }
+      }, 250);
+    }).observe(document.documentElement, { childList: true, subtree: true });
     chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
       if (message.type !== 'FILL_WORKDAY') return;
       runFill(message.profile, message.resume)
@@ -20,3 +33,12 @@ export default defineContentScript({
     });
   }
 });
+
+function stageFingerprint(): string {
+  const headings = Array.from(document.querySelectorAll<HTMLElement>('h1, h2, [role="heading"]'))
+    .filter((heading) => Boolean(heading.getClientRects().length))
+    .slice(0, 3)
+    .map((heading) => heading.innerText.trim())
+    .join('|');
+  return `${location.pathname}|${headings}`;
+}
