@@ -30,6 +30,7 @@ export function intentForLabel(label: string, kind: FieldKind): FieldIntent {
   if (/github/.test(label)) return 'github';
   if (/portfolio|personal website|website url/.test(label)) return 'portfolio';
   if (/\bcity\b/.test(label)) return 'city';
+  if (/\bcountry\b/.test(label)) return 'country';
   return attestationIntentForLabel(label) ?? 'unknown';
 }
 

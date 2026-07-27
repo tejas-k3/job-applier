@@ -15,6 +15,14 @@ function isFilled(control: Control): boolean {
 
 function setValue(control: Control, value: string): boolean {
   if (!value || control.disabled || (!(control instanceof HTMLSelectElement) && control.readOnly)) return false;
+  if (control instanceof HTMLSelectElement) {
+    const option = Array.from(control.options).find((candidate) => candidate.value === value || candidate.text.trim().toLowerCase() === value.trim().toLowerCase());
+    if (!option) return false;
+    control.value = option.value;
+    control.dispatchEvent(new Event('input', { bubbles: true }));
+    control.dispatchEvent(new Event('change', { bubbles: true }));
+    return control.value === option.value;
+  }
   const prototype = control instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : control instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
   Object.getOwnPropertyDescriptor(prototype, 'value')?.set?.call(control, value);
   control.dispatchEvent(new Event('input', { bubbles: true }));

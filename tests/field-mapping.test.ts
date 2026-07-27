@@ -17,6 +17,7 @@ describe('profileValueForLabel', () => {
     expect(profileValueForLabel('Primary Email Address', profile)).toBe('tejas@example.com');
     expect(profileValueForLabel('Mobile Phone Number', profile)).toBe('+919999999999');
     expect(profileValueForLabel('GitHub profile URL', profile)).toBe('https://github.com/tejas-k3');
+    expect(profileValueForLabel('Country of residence', profile)).toBe('India');
   });
 
   it('does not guess an unknown question', () => {

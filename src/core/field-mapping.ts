@@ -15,6 +15,7 @@ export function profileValueForLabel(label: string, profile: CandidateProfile): 
   if (/github/.test(normalized)) return identity.links.github;
   if (/portfolio personal website website url/.test(normalized)) return identity.links.portfolio;
   if (/city/.test(normalized)) return identity.location.city;
+  if (/country/.test(normalized)) return identity.location.country;
   return undefined;
 }
 
