@@ -9,5 +9,6 @@ export type RuntimeMessage =
   | { type: 'GET_RESUME_META' }
   | { type: 'FILL_ACTIVE_TAB' }
   | { type: 'STOP_ACTIVE_TAB' }
+  | { type: 'GET_RUNS' }
   | { type: 'PAGE_READY' }
   | { type: 'FILL_WORKDAY'; profile: CandidateProfile; resume?: ResumeRecord };

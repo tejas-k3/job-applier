@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { RuntimeMessage } from '../../src/core/messages';
 import { emptyProfile, isProfile, type CandidateProfile } from '../../src/core/profile';
+import type { ApplicationRun } from '../../src/core/run';
 import './style.css';
 
 function send<T>(message: RuntimeMessage): Promise<T> {
@@ -12,6 +13,7 @@ function App() {
   const [text, setText] = useState(JSON.stringify(emptyProfile, null, 2));
   const [status, setStatus] = useState('Set up your profile and choose a PDF resume.');
   const [resumeName, setResumeName] = useState('No PDF saved');
+  const [runs, setRuns] = useState<ApplicationRun[]>([]);
 
   useEffect(() => {
     void (async () => {
@@ -19,6 +21,8 @@ function App() {
       if (profile) setText(JSON.stringify(profile, null, 2));
       const { resume } = await send<{ resume: { name: string } | null }>({ type: 'GET_RESUME_META' });
       if (resume) setResumeName(resume.name);
+      const result = await send<{ runs: ApplicationRun[] }>({ type: 'GET_RUNS' });
+      setRuns(result.runs);
     })();
   }, []);
 
@@ -45,6 +49,8 @@ function App() {
   async function fillTab() {
     const result = await send<{ ok: boolean; error?: string; report?: string[] }>({ type: 'FILL_ACTIVE_TAB' });
     setStatus(result.ok ? (result.report ?? []).join(' • ') : (result.error ?? 'Fill failed.'));
+    const updated = await send<{ runs: ApplicationRun[] }>({ type: 'GET_RUNS' });
+    setRuns(updated.runs);
   }
 
   async function stopTab() {
@@ -62,6 +68,7 @@ function App() {
     <section><h2>1. Candidate profile</h2><textarea value={text} onChange={(event) => setText(event.target.value)} spellCheck={false} /><div className="row"><button onClick={saveProfile}>Save profile</button><button className="secondary" onClick={exportProfile}>Export JSON</button></div></section>
     <section><h2>2. PDF resume</h2><p>{resumeName}</p><input type="file" accept="application/pdf" onChange={(event) => void chooseResume(event.target.files?.[0])} /></section>
     <section><h2>3. Run current job tab</h2><button className="fill" onClick={() => void fillTab()}>Start background fill</button><button className="secondary" onClick={() => void stopTab()}>Stop this tab</button><p className="status">{status}</p></section>
+    <section><h2>Application queue</h2>{runs.length ? <ul className="runs">{runs.map((run) => <li key={run.tabId}><strong>{run.provider}</strong> · {run.status}<br /><small>{run.message}</small></li>)}</ul> : <p>No active application runs.</p>}</section>
   </main>;
 }
 
