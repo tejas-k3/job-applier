@@ -16,11 +16,11 @@ async function fillTab(tabId: number, url = '') {
     await upsertRun({ tabId, url, provider: detectProvider(url), status: 'failed', message, updatedAt: new Date().toISOString() });
     return { ok: false, error: message };
   }
-  const report = response as { ok: boolean; report?: string[]; nextAction?: 'advanced' | 'review' | 'waiting'; error?: string };
+  const report = response as { ok: boolean; report?: string[]; nextAction?: 'advanced' | 'review' | 'waiting'; stage?: string; error?: string };
   await upsertRun({
     tabId, url, provider: detectProvider(url),
     status: !report.ok ? 'failed' : report.nextAction === 'advanced' ? 'filling' : report.nextAction === 'waiting' ? 'waiting_for_user' : 'ready_for_review',
-    message: report.error ?? report.report?.at(-1) ?? 'Awaiting page update', updatedAt: new Date().toISOString()
+    message: report.error ?? (report.stage ? `${report.stage}: ${report.report?.at(-1) ?? 'Awaiting page update'}` : report.report?.at(-1) ?? 'Awaiting page update'), updatedAt: new Date().toISOString()
   });
   return report;
 }

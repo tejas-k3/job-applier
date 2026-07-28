@@ -27,7 +27,7 @@ export default defineContentScript({
     chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
       if (message.type !== 'FILL_WORKDAY') return;
       runFill(message.profile, message.resume)
-        .then((report) => sendResponse({ ok: true, report: report.items.map((item) => `${item.state}: ${item.field.label || item.field.intent} — ${item.message}`), nextAction: report.nextAction, provider: report.provider }))
+        .then((report) => sendResponse({ ok: true, report: report.items.map((item) => `${item.state}: ${item.field.label || item.field.intent} — ${item.message}`), nextAction: report.nextAction, provider: report.provider, stage: report.stage }))
         .catch((error: unknown) => sendResponse({ ok: false, error: error instanceof Error ? error.message : 'Unable to fill page.' }));
       return true;
     });

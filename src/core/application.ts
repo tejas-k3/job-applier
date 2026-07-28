@@ -17,4 +17,4 @@ export type NormalizedField = {
 
 export type FillState = 'filled' | 'already_present' | 'unresolved' | 'blocked' | 'failed';
 export type FillItem = { field: NormalizedField; state: FillState; message: string };
-export type FillReport = { provider: Provider; items: FillItem[]; nextAction: 'advanced' | 'review' | 'waiting'; };
+export type FillReport = { provider: Provider; stage?: string; items: FillItem[]; nextAction: 'advanced' | 'review' | 'waiting'; };

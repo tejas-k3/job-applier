@@ -1,5 +1,6 @@
 import { inspectControls } from '../adapters/form-inspector';
 import { detectProvider } from '../adapters/provider';
+import { detectWorkdayStage, visibleHeadings } from '../adapters/workday';
 import type { FillItem, FillReport, NormalizedField } from '../core/application';
 import type { ResumeRecord } from '../core/messages';
 import type { CandidateProfile } from '../core/profile';
@@ -57,6 +58,7 @@ function item(field: NormalizedField, state: FillItem['state'], message: string)
 
 export async function runFill(profile: CandidateProfile, resume?: ResumeRecord): Promise<FillReport> {
   const provider = detectProvider(location.href);
+  const stage = provider === 'workday' ? detectWorkdayStage(visibleHeadings()) : undefined;
   const items: FillItem[] = [];
   const controls = inspectControls().filter(({ field }) => field.visible);
   const labelOccurrences = new Map<string, number>();
@@ -97,5 +99,5 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
     ? Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find((button) => !button.disabled && /^(next|continue|save and continue)$/i.test(button.innerText.trim()))
     : undefined;
   if (next) next.click();
-  return { provider, items, nextAction: next ? 'advanced' : unresolved ? 'waiting' : 'review' };
+  return { provider, stage, items, nextAction: next ? 'advanced' : unresolved ? 'waiting' : 'review' };
 }
