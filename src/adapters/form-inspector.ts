@@ -20,8 +20,10 @@ function kindFor(control: Control): FieldKind {
   return 'text';
 }
 
-export function intentForLabel(label: string, kind: FieldKind): FieldIntent {
-  if (kind === 'file' && /resume|cv|curriculum vitae/.test(label)) return 'resume';
+export function intentForLabel(label: string, kind: FieldKind, identifier = ''): FieldIntent {
+  if (kind === 'file' && /resume|cv|curriculum vitae/.test(`${label} ${identifier}`)) return 'resume';
+  if (kind === 'file' && !/cover.?letter/.test(`${label} ${identifier}`)) return 'resume';
+  if (/^name$|full name|legal name/.test(label)) return 'full_name';
   if (/\b(last|family|surname)\b/.test(label)) return 'last_name';
   if (/\b(first|given)\b/.test(label)) return 'first_name';
   if (/email/.test(label)) return 'email';
@@ -46,7 +48,7 @@ export function inspectControls(root: ParentNode = document): Array<{ control: C
         key: control.id || control.name || `${kind}-${index}`,
         label,
         kind,
-        intent: intentForLabel(label, kind),
+        intent: intentForLabel(label, kind, `${control.id} ${control.name}`),
         required: control.required || control.getAttribute('aria-required') === 'true',
         visible: Boolean(control.getClientRects().length)
       }

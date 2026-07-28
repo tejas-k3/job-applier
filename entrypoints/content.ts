@@ -7,7 +7,9 @@ export default defineContentScript({
     'https://jobs.lever.co/*',
     'https://boards.greenhouse.io/*',
     'https://job-boards.greenhouse.io/*',
-    'https://jobs.ashbyhq.com/*'
+    'https://jobs.ashbyhq.com/*',
+    'https://bolt.eu/*',
+    'https://wise.jobs/*'
   ],
   main() {
     let lastStage = stageFingerprint();

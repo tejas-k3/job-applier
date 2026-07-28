@@ -18,6 +18,7 @@ describe('profileValueForLabel', () => {
     expect(profileValueForLabel('Mobile Phone Number', profile)).toBe('+919999999999');
     expect(profileValueForLabel('GitHub profile URL', profile)).toBe('https://github.com/tejas-k3');
     expect(profileValueForLabel('Country of residence', profile)).toBe('India');
+    expect(profileValueForLabel('Name', profile)).toBe('Tejas K');
   });
 
   it('does not guess an unknown question', () => {
@@ -52,6 +53,7 @@ describe('locked screening answers', () => {
   it('only answers country-specific work authorization from the profile', () => {
     const screenedProfile = { ...profile, employment: { ...profile.employment, work_authorization: ['India'], requires_sponsorship: false } };
     expect(screeningAnswerForLabel('Are you authorized to work in India?', screenedProfile)).toBe(true);
+    expect(screeningAnswerForLabel('Are you legally authorized to work in this country?', screenedProfile)).toBe(true);
     expect(screeningAnswerForLabel('Will you require sponsorship now or in the future?', screenedProfile)).toBe(false);
     expect(screeningAnswerForLabel('Are you authorized to work in Germany?', screenedProfile)).toBeUndefined();
   });

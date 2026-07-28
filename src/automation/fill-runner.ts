@@ -64,6 +64,11 @@ function choiceMatchesAnswer(control: HTMLInputElement, answer: boolean): boolea
 export async function runFill(profile: CandidateProfile, resume?: ResumeRecord): Promise<FillReport> {
   const provider = detectProvider(location.href);
   const stage = provider === 'workday' ? detectWorkdayStage(visibleHeadings()) : undefined;
+  const ashbyApply = provider === 'ashby' ? Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find((button) => /^apply for this job$/i.test((button.innerText || button.textContent || '').trim())) : undefined;
+  if (ashbyApply && !document.querySelector('input, textarea, select')) {
+    ashbyApply.click();
+    return { provider, stage, items: [], nextAction: 'advanced' };
+  }
   const items: FillItem[] = [];
   const controls = inspectControls().filter(({ field }) => field.visible);
   const labelOccurrences = new Map<string, number>();
@@ -106,6 +111,15 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
         control.click();
         items.push(item(field, 'filled', 'Applied locked profile screening answer'));
       }
+      continue;
+    }
+    if ((field.intent === 'work_authorization' || field.intent === 'requires_sponsorship') && control.getAttribute('role') === 'combobox') {
+      const answer = screeningAnswerForLabel(field.label, profile);
+      if (answer === undefined) items.push(item(field, 'blocked', 'Screening answer is not unambiguous in the profile'));
+      else if (setValue(control, answer ? 'Yes' : 'No')) {
+        await settleCombobox(control, answer ? 'Yes' : 'No');
+        items.push(item(field, 'filled', 'Applied locked profile screening answer'));
+      } else items.push(item(field, 'failed', 'Combobox rejected the screening answer'));
       continue;
     }
     const occurrence = labelOccurrences.get(field.label) ?? 0;

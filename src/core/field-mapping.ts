@@ -11,6 +11,7 @@ export function profileValueForLabel(label: string, profile: CandidateProfile): 
 export function profileValueForOccurrence(label: string, profile: CandidateProfile, occurrence: number): string | undefined {
   const normalized = normalizeText(label);
   const { identity } = profile;
+  if (/^name$|full name|legal name/.test(normalized)) return `${identity.first_name} ${identity.last_name}`.trim();
   if (/\b(last|family|surname)\b/.test(normalized)) return identity.last_name;
   if (/\b(first|given)\b/.test(normalized)) return identity.first_name;
   if (/email/.test(normalized)) return identity.email;
@@ -57,6 +58,7 @@ export function screeningAnswerForLabel(label: string, profile: CandidateProfile
   const normalized = normalizeText(label);
   if (/sponsor|sponsorship|visa support/.test(normalized)) return profile.employment.requires_sponsorship ?? undefined;
   if (/authorized|authorised|right to work|work permit/.test(normalized)) {
+    if (normalized.includes('this country') && profile.employment.work_authorization.some((country) => normalizeText(country) === normalizeText(profile.identity.location.country))) return true;
     return profile.employment.work_authorization.some((country) => normalized.includes(normalizeText(country))) ? true : undefined;
   }
   return undefined;

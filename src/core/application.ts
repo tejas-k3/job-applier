@@ -1,7 +1,7 @@
 export type Provider = 'workday' | 'lever' | 'greenhouse' | 'ashby' | 'generic';
 export type FieldKind = 'text' | 'textarea' | 'checkbox' | 'radio' | 'file' | 'select' | 'combobox' | 'unknown';
 export type FieldIntent =
-  | 'first_name' | 'last_name' | 'email' | 'phone' | 'city' | 'country'
+  | 'first_name' | 'last_name' | 'full_name' | 'email' | 'phone' | 'city' | 'country'
   | 'linkedin' | 'github' | 'portfolio' | 'resume'
   | 'work_authorization' | 'requires_sponsorship'
   | 'family_employment_conflict' | 'restrictive_covenant' | 'profile_accuracy'
