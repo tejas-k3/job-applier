@@ -4,7 +4,7 @@ import { detectWorkdayStage, visibleHeadings } from '../adapters/workday';
 import type { FillItem, FillReport, NormalizedField } from '../core/application';
 import type { ResumeRecord } from '../core/messages';
 import type { CandidateProfile } from '../core/profile';
-import { matchingAttestationRule, profileValueForOccurrence } from '../core/field-mapping';
+import { matchingAttestationRule, profileValueForOccurrence, screeningAnswerForLabel } from '../core/field-mapping';
 
 type Control = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
@@ -93,6 +93,19 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
           items.push(item(field, 'already_present', `Approved false declaration: ${rule.intent}`));
         }
       } else items.push(item(field, 'blocked', 'Declaration needs candidate review'));
+      continue;
+    }
+    if ((field.intent === 'work_authorization' || field.intent === 'requires_sponsorship') && control instanceof HTMLInputElement && (control.type === 'checkbox' || control.type === 'radio')) {
+      const answer = screeningAnswerForLabel(field.label, profile);
+      if (answer === undefined) {
+        items.push(item(field, 'blocked', 'Screening answer is not unambiguous in the profile'));
+      } else if (control.type === 'radio' && choiceMatchesAnswer(control, answer)) {
+        control.click();
+        items.push(item(field, 'filled', 'Applied locked profile screening answer'));
+      } else if (control.type === 'checkbox' && answer) {
+        control.click();
+        items.push(item(field, 'filled', 'Applied locked profile screening answer'));
+      }
       continue;
     }
     const occurrence = labelOccurrences.get(field.label) ?? 0;

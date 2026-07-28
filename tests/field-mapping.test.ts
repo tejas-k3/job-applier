@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attestationIntentForLabel, matchingAttestationRule, profileValueForLabel, profileValueForOccurrence } from '../src/core/field-mapping';
+import { attestationIntentForLabel, matchingAttestationRule, profileValueForLabel, profileValueForOccurrence, screeningAnswerForLabel } from '../src/core/field-mapping';
 import { emptyProfile } from '../src/core/profile';
 
 const profile = {
@@ -45,5 +45,14 @@ describe('repeatable profile data', () => {
     expect(profileValueForOccurrence('Employer name', richProfile, 0)).toBe('Acme');
     expect(profileValueForOccurrence('Employer name', richProfile, 1)).toBe('Globex');
     expect(profileValueForOccurrence('Job title', richProfile, 1)).toBe('Platform Engineer');
+  });
+});
+
+describe('locked screening answers', () => {
+  it('only answers country-specific work authorization from the profile', () => {
+    const screenedProfile = { ...profile, employment: { ...profile.employment, work_authorization: ['India'], requires_sponsorship: false } };
+    expect(screeningAnswerForLabel('Are you authorized to work in India?', screenedProfile)).toBe(true);
+    expect(screeningAnswerForLabel('Will you require sponsorship now or in the future?', screenedProfile)).toBe(false);
+    expect(screeningAnswerForLabel('Are you authorized to work in Germany?', screenedProfile)).toBeUndefined();
   });
 });

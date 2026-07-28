@@ -52,3 +52,12 @@ export function matchingAttestationRule(label: string, rules: AttestationRule[])
   const intent = attestationIntentForLabel(label);
   return rules.find((rule) => rule.enabled && rule.intent === intent);
 }
+
+export function screeningAnswerForLabel(label: string, profile: CandidateProfile): boolean | undefined {
+  const normalized = normalizeText(label);
+  if (/sponsor|sponsorship|visa support/.test(normalized)) return profile.employment.requires_sponsorship ?? undefined;
+  if (/authorized|authorised|right to work|work permit/.test(normalized)) {
+    return profile.employment.work_authorization.some((country) => normalized.includes(normalizeText(country))) ? true : undefined;
+  }
+  return undefined;
+}
