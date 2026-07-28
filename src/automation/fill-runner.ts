@@ -56,6 +56,11 @@ function item(field: NormalizedField, state: FillItem['state'], message: string)
   return { field, state, message };
 }
 
+function choiceMatchesAnswer(control: HTMLInputElement, answer: boolean): boolean {
+  const choice = `${control.value} ${control.closest('label')?.innerText ?? ''}`.trim().toLowerCase();
+  return answer ? /\b(yes|true|agree|accept)\b/.test(choice) : /\b(no|false|disagree|decline)\b/.test(choice);
+}
+
 export async function runFill(profile: CandidateProfile, resume?: ResumeRecord): Promise<FillReport> {
   const provider = detectProvider(location.href);
   const stage = provider === 'workday' ? detectWorkdayStage(visibleHeadings()) : undefined;
@@ -76,8 +81,17 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
     if (field.intent === 'family_employment_conflict' || field.intent === 'restrictive_covenant' || field.intent === 'profile_accuracy') {
       const rule = matchingAttestationRule(field.label, profile.attestation_rules);
       if (rule && control instanceof HTMLInputElement && (control.type === 'checkbox' || control.type === 'radio')) {
-        if (rule.answer) control.click();
-        items.push(item(field, rule.answer ? 'filled' : 'already_present', `Applied approved declaration: ${rule.intent}`));
+        if (control.type === 'radio') {
+          if (choiceMatchesAnswer(control, rule.answer)) {
+            control.click();
+            items.push(item(field, 'filled', `Applied approved declaration: ${rule.intent}`));
+          }
+        } else if (rule.answer) {
+          control.click();
+          items.push(item(field, 'filled', `Applied approved declaration: ${rule.intent}`));
+        } else {
+          items.push(item(field, 'already_present', `Approved false declaration: ${rule.intent}`));
+        }
       } else items.push(item(field, 'blocked', 'Declaration needs candidate review'));
       continue;
     }
@@ -92,6 +106,15 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
       await settleCombobox(control, value);
       items.push(item(field, 'filled', 'Value verified'));
     } else items.push(item(field, 'failed', 'Control rejected the value'));
+  }
+
+  for (const { control, field } of controls.filter(({ field }) => field.required)) {
+    const radioGroupSelected = control instanceof HTMLInputElement && control.type === 'radio'
+      ? Array.from(document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${CSS.escape(control.name)}"]`)).some((radio) => radio.checked)
+      : false;
+    if (!isFilled(control) && !radioGroupSelected && !items.some((entry) => entry.field.key === field.key && entry.state !== 'already_present')) {
+      items.push(item(field, 'unresolved', 'Required field remains empty'));
+    }
   }
 
   const unresolved = items.some(({ state }) => state === 'unresolved' || state === 'blocked' || state === 'failed');
