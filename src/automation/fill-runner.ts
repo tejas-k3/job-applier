@@ -132,7 +132,7 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
 
   const unresolved = items.some(({ state }) => state === 'unresolved' || state === 'blocked' || state === 'failed');
   const next = !unresolved && items.some(({ state }) => state === 'filled')
-    ? Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find((button) => !button.disabled && /^(next|continue|save and continue)$/i.test(button.innerText.trim()))
+    ? Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find((button) => !button.disabled && /^(next|continue|save and continue)$/i.test((button.innerText || button.textContent || '').trim()))
     : undefined;
   if (next) next.click();
   return { provider, stage, items, nextAction: next ? 'advanced' : unresolved ? 'waiting' : 'review' };
