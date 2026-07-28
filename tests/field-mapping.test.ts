@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attestationIntentForLabel, matchingAttestationRule, profileValueForLabel } from '../src/core/field-mapping';
+import { attestationIntentForLabel, matchingAttestationRule, profileValueForLabel, profileValueForOccurrence } from '../src/core/field-mapping';
 import { emptyProfile } from '../src/core/profile';
 
 const profile = {
@@ -33,5 +33,17 @@ describe('attestation mapping', () => {
 
   it('only returns enabled pre-approved rules', () => {
     expect(matchingAttestationRule('Is your information true and accurate?', profile.attestation_rules)).toBeUndefined();
+  });
+});
+
+describe('repeatable profile data', () => {
+  it('maps sequential work-experience fields', () => {
+    const richProfile = { ...profile, experience: [
+      { company: 'Acme', title: 'Backend Engineer', summary: 'Built APIs' },
+      { company: 'Globex', title: 'Platform Engineer', summary: 'Improved reliability' }
+    ] };
+    expect(profileValueForOccurrence('Employer name', richProfile, 0)).toBe('Acme');
+    expect(profileValueForOccurrence('Employer name', richProfile, 1)).toBe('Globex');
+    expect(profileValueForOccurrence('Job title', richProfile, 1)).toBe('Platform Engineer');
   });
 });

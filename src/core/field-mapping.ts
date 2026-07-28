@@ -5,6 +5,10 @@ export function normalizeText(value: string): string {
 }
 
 export function profileValueForLabel(label: string, profile: CandidateProfile): string | undefined {
+  return profileValueForOccurrence(label, profile, 0);
+}
+
+export function profileValueForOccurrence(label: string, profile: CandidateProfile, occurrence: number): string | undefined {
   const normalized = normalizeText(label);
   const { identity } = profile;
   if (/\b(last|family|surname)\b/.test(normalized)) return identity.last_name;
@@ -16,6 +20,19 @@ export function profileValueForLabel(label: string, profile: CandidateProfile): 
   if (/portfolio personal website website url/.test(normalized)) return identity.links.portfolio;
   if (/city/.test(normalized)) return identity.location.city;
   if (/country/.test(normalized)) return identity.location.country;
+  const experience = profile.experience[occurrence];
+  if (experience) {
+    if (/\b(company|employer|organization)\b/.test(normalized)) return experience.company;
+    if (/\b(job title|position title|title)\b/.test(normalized)) return experience.title;
+    if (/\b(description|responsibilities|summary)\b/.test(normalized)) return experience.summary;
+    if (/\b(work location|employer location)\b/.test(normalized)) return experience.location;
+  }
+  const education = profile.education[occurrence];
+  if (education) {
+    if (/\b(school|university|college|institution)\b/.test(normalized)) return education.school;
+    if (/\b(degree)\b/.test(normalized)) return education.degree;
+    if (/\b(field of study|major|specialization)\b/.test(normalized)) return education.field_of_study;
+  }
   return undefined;
 }
 

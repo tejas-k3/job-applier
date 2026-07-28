@@ -3,7 +3,7 @@ import { detectProvider } from '../adapters/provider';
 import type { FillItem, FillReport, NormalizedField } from '../core/application';
 import type { ResumeRecord } from '../core/messages';
 import type { CandidateProfile } from '../core/profile';
-import { matchingAttestationRule, profileValueForLabel } from '../core/field-mapping';
+import { matchingAttestationRule, profileValueForOccurrence } from '../core/field-mapping';
 
 type Control = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
@@ -59,6 +59,7 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
   const provider = detectProvider(location.href);
   const items: FillItem[] = [];
   const controls = inspectControls().filter(({ field }) => field.visible);
+  const labelOccurrences = new Map<string, number>();
 
   for (const { control, field } of controls) {
     if (isFilled(control)) {
@@ -78,7 +79,9 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
       } else items.push(item(field, 'blocked', 'Declaration needs candidate review'));
       continue;
     }
-    const value = profileValueForLabel(field.label, profile);
+    const occurrence = labelOccurrences.get(field.label) ?? 0;
+    labelOccurrences.set(field.label, occurrence + 1);
+    const value = profileValueForOccurrence(field.label, profile, occurrence);
     if (!value) {
       if (field.required) items.push(item(field, 'unresolved', 'Required field has no profile value'));
       continue;

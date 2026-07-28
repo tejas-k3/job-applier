@@ -19,8 +19,8 @@ export type CandidateProfile = {
     requires_sponsorship: boolean | null;
     notice_period: string;
   };
-  experience: Array<{ company: string; title: string; summary: string }>;
-  education: Array<{ school: string; degree: string }>;
+  experience: Array<{ company: string; title: string; summary: string; location?: string; start_date?: string; end_date?: string }>;
+  education: Array<{ school: string; degree: string; field_of_study?: string; start_date?: string; end_date?: string }>;
   skills: string[];
   attestation_rules: AttestationRule[];
 };
