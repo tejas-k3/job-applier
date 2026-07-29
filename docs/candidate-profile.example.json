@@ -5,6 +5,7 @@
     "last_name": "Lovelace",
     "email": "ada@example.com",
     "phone_e164": "+919876543210",
+    "nationality": "Indian",
     "location": { "city": "Hyderabad", "region": "Telangana", "country": "India" },
     "links": {
       "linkedin": "https://www.linkedin.com/in/ada-lovelace",

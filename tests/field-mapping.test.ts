@@ -5,7 +5,7 @@ import { emptyProfile } from '../src/core/profile';
 const profile = {
   ...emptyProfile,
   identity: {
-    first_name: 'Tejas', last_name: 'K', email: 'tejas@example.com', phone_e164: '+919999999999',
+    first_name: 'Tejas', last_name: 'K', email: 'tejas@example.com', phone_e164: '+919999999999', nationality: 'Indian',
     location: { city: 'Hyderabad', region: 'Telangana', country: 'India' },
     links: { linkedin: 'https://linkedin.com/in/tejas', github: 'https://github.com/tejas-k3', portfolio: 'https://tejas.dev' }
   }
@@ -18,6 +18,7 @@ describe('profileValueForLabel', () => {
     expect(profileValueForLabel('Mobile Phone Number', profile)).toBe('+919999999999');
     expect(profileValueForLabel('GitHub profile URL', profile)).toBe('https://github.com/tejas-k3');
     expect(profileValueForLabel('Country of residence', profile)).toBe('India');
+    expect(profileValueForLabel('Nationality', profile)).toBe('Indian');
     expect(profileValueForLabel('Name', profile)).toBe('Tejas K');
   });
 

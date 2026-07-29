@@ -11,6 +11,7 @@ export type CandidateProfile = {
     last_name: string;
     email: string;
     phone_e164: string;
+    nationality: string;
     location: { city: string; region: string; country: string };
     links: { linkedin: string; github: string; portfolio: string };
   };
@@ -28,7 +29,7 @@ export type CandidateProfile = {
 export const emptyProfile: CandidateProfile = {
   schema_version: 1,
   identity: {
-    first_name: '', last_name: '', email: '', phone_e164: '',
+    first_name: '', last_name: '', email: '', phone_e164: '', nationality: '',
     location: { city: '', region: '', country: '' },
     links: { linkedin: '', github: '', portfolio: '' }
   },

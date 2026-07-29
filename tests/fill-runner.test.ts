@@ -6,7 +6,7 @@ import { emptyProfile, type CandidateProfile } from '../src/core/profile';
 const profile: CandidateProfile = {
   ...emptyProfile,
   identity: {
-    first_name: 'Tejas', last_name: 'K', email: 'tejas@example.com', phone_e164: '+919999999999',
+    first_name: 'Tejas', last_name: 'K', email: 'tejas@example.com', phone_e164: '+919999999999', nationality: 'Indian',
     location: { city: 'Hyderabad', region: 'Telangana', country: 'India' },
     links: { linkedin: 'https://linkedin.com/in/tejas', github: 'https://github.com/tejas-k3', portfolio: 'https://tejas.dev' }
   },

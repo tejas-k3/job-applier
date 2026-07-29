@@ -15,6 +15,7 @@ export function profileValueForOccurrence(label: string, profile: CandidateProfi
   if (/\b(last|family|surname)\b/.test(normalized)) return identity.last_name;
   if (/\b(first|given)\b/.test(normalized)) return identity.first_name;
   if (/email/.test(normalized)) return identity.email;
+  if (/nationality/.test(normalized)) return identity.nationality;
   if (/\b(phone|mobile|telephone)\b/.test(normalized)) return identity.phone_e164;
   if (/linkedin/.test(normalized)) return identity.links.linkedin;
   if (/github/.test(normalized)) return identity.links.github;

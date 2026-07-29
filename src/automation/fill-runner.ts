@@ -56,6 +56,20 @@ function item(field: NormalizedField, state: FillItem['state'], message: string)
   return { field, state, message };
 }
 
+function fillAshbyVisaChoice(profile: CandidateProfile): FillItem[] {
+  const answer = profile.employment.requires_sponsorship;
+  if (answer === null) return [];
+  const button = Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find((candidate) => {
+    const text = (candidate.innerText || candidate.textContent || '').trim().toLowerCase();
+    if (text !== (answer ? 'yes' : 'no')) return false;
+    const context = candidate.parentElement?.parentElement?.innerText?.toLowerCase() ?? '';
+    return /work visa|visa.*need|sponsorship/.test(context);
+  });
+  if (!button) return [];
+  button.click();
+  return [{ field: { key: 'ashby-visa', label: 'Work visa', kind: 'radio', intent: 'requires_sponsorship', required: false, visible: true }, state: 'filled', message: 'Applied locked profile visa answer' }];
+}
+
 function choiceMatchesAnswer(control: HTMLInputElement, answer: boolean): boolean {
   const choice = `${control.value} ${control.closest('label')?.innerText ?? ''}`.trim().toLowerCase();
   return answer ? /\b(yes|true|agree|accept)\b/.test(choice) : /\b(no|false|disagree|decline)\b/.test(choice);
@@ -71,6 +85,8 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
   }
   const items: FillItem[] = [];
   const controls = inspectControls().filter(({ field }) => field.visible);
+
+  if (provider === 'ashby') items.push(...fillAshbyVisaChoice(profile));
   const labelOccurrences = new Map<string, number>();
 
   for (const { control, field } of controls) {
