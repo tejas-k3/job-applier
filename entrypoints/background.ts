@@ -12,9 +12,14 @@ async function fillTab(tabId: number, url = '') {
   try {
     response = await chrome.tabs.sendMessage(tabId, { type: 'FILL_WORKDAY', profile, resume });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Could not connect to this application page';
-    await upsertRun({ tabId, url, provider: detectProvider(url), status: 'failed', message, updatedAt: new Date().toISOString() });
-    return { ok: false, error: message };
+    try {
+      await chrome.scripting.executeScript({ target: { tabId }, files: ['content-scripts/content.js'] });
+      response = await chrome.tabs.sendMessage(tabId, { type: 'FILL_WORKDAY', profile, resume });
+    } catch (injectionError) {
+      const message = injectionError instanceof Error ? injectionError.message : (error instanceof Error ? error.message : 'Could not connect to this application page');
+      await upsertRun({ tabId, url, provider: detectProvider(url), status: 'failed', message, updatedAt: new Date().toISOString() });
+      return { ok: false, error: message };
+    }
   }
   const report = response as { ok: boolean; report?: string[]; nextAction?: 'advanced' | 'review' | 'waiting'; stage?: string; error?: string };
   await upsertRun({
@@ -65,4 +70,12 @@ export default defineBackground(() => {
     return true;
   });
   chrome.tabs.onRemoved.addListener((tabId) => void removeRun(tabId));
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status !== 'complete') return;
+    void (async () => {
+      const run = (await getRuns()).find((item) => item.tabId === tabId);
+      if (!run || run.status !== 'filling') return;
+      await fillTab(tabId, tab.url ?? run.url);
+    })();
+  });
 });

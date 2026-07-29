@@ -12,6 +12,8 @@ export default defineContentScript({
     'https://wise.jobs/*'
   ],
   main() {
+    if ((window as Window & { __jobApplierMounted?: boolean }).__jobApplierMounted) return;
+    (window as Window & { __jobApplierMounted?: boolean }).__jobApplierMounted = true;
     let lastStage = stageFingerprint();
     const notifyPageReady = () => chrome.runtime.sendMessage({ type: 'PAGE_READY' }).catch(() => undefined);
     notifyPageReady();
