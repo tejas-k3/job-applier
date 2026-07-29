@@ -58,6 +58,23 @@ function App() {
     setStatus('Stopped background filling for this tab.');
   }
 
+  async function copyLinkedInBasics() {
+    try {
+      const profile: unknown = JSON.parse(text);
+      if (!isProfile(profile)) throw new Error('Save a valid profile first.');
+      const lines = [
+        `Name: ${profile.identity.first_name} ${profile.identity.last_name}`.trim(),
+        `Email: ${profile.identity.email}`,
+        `Phone: ${profile.identity.phone_e164}`,
+        `Location: ${[profile.identity.location.city, profile.identity.location.region, profile.identity.location.country].filter(Boolean).join(', ')}`,
+        `LinkedIn: ${profile.identity.links.linkedin}`,
+        `GitHub: ${profile.identity.links.github}`
+      ].filter((line) => !line.endsWith(': '));
+      await navigator.clipboard.writeText(lines.join('\n'));
+      setStatus('Profile basics copied for manual LinkedIn Easy Apply entry.');
+    } catch (error) { setStatus(error instanceof Error ? error.message : 'Unable to copy profile basics.'); }
+  }
+
   function exportProfile() {
     const blob = new Blob([text], { type: 'application/json' });
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'candidate-profile.json'; link.click(); URL.revokeObjectURL(link.href);
@@ -68,6 +85,7 @@ function App() {
     <section><h2>1. Candidate profile</h2><textarea value={text} onChange={(event) => setText(event.target.value)} spellCheck={false} /><div className="row"><button onClick={saveProfile}>Save profile</button><button className="secondary" onClick={exportProfile}>Export JSON</button></div></section>
     <section><h2>2. PDF resume</h2><p>{resumeName}</p><input type="file" accept="application/pdf" onChange={(event) => void chooseResume(event.target.files?.[0])} /></section>
     <section><h2>3. Run current job tab</h2><button className="fill" onClick={() => void fillTab()}>Start background fill</button><button className="secondary" onClick={() => void stopTab()}>Stop this tab</button><p className="status">{status}</p></section>
+    <section><h2>LinkedIn Easy Apply</h2><p>Manual copy-assist only. LinkedIn form filling and clicks are never automated.</p><button className="secondary" onClick={() => void copyLinkedInBasics()}>Copy profile basics</button></section>
     <section><h2>Application queue</h2>{runs.length ? <ul className="runs">{runs.map((run) => <li key={run.tabId}><strong>{run.provider}</strong> · {run.status}<br /><small>{run.message}</small></li>)}</ul> : <p>No active application runs.</p>}</section>
   </main>;
 }

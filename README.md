@@ -26,6 +26,8 @@ npm run dev
 - Verified identity/contact/link/city/country fields, native select controls, and PDF resume upload.
 - Candidate-approved stable declaration rules.
 - A hard stop for authentication, CAPTCHA, MFA, email verification, unknown required data, and unrecognized declarations.
+- User-initiated generic custom-portal mode for the currently selected tab.
+- LinkedIn Easy Apply copy-assist only; it never reads, fills, clicks, or submits on LinkedIn.
 
 ## Commands
 
