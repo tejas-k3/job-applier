@@ -12,7 +12,8 @@ export default defineConfig({
       'https://job-boards.greenhouse.io/*',
       'https://jobs.ashbyhq.com/*',
       'https://bolt.eu/*',
-      'https://wise.jobs/*'
+      'https://wise.jobs/*',
+      'https://*.sapsf.eu/*'
     ],
     side_panel: { default_path: 'sidepanel.html' },
     action: { default_title: 'Open Job Applier' }

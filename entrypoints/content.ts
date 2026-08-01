@@ -9,8 +9,10 @@ export default defineContentScript({
     'https://job-boards.greenhouse.io/*',
     'https://jobs.ashbyhq.com/*',
     'https://bolt.eu/*',
-    'https://wise.jobs/*'
+    'https://wise.jobs/*',
+    'https://*.sapsf.eu/*'
   ],
+  allFrames: true,
   main() {
     if ((window as Window & { __jobApplierMounted?: boolean }).__jobApplierMounted) return;
     (window as Window & { __jobApplierMounted?: boolean }).__jobApplierMounted = true;

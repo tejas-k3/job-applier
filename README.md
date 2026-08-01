@@ -21,7 +21,8 @@ npm run dev
 
 ## What it supports now
 
-- Workday hosted external applications, plus hosted Lever, Greenhouse, and Ashby pages.
+- Workday hosted external applications, plus hosted Lever, Greenhouse, Ashby, and SAP SuccessFactors pages.
+- Workday's initial **Apply Manually** screen advances automatically; account creation/sign-in remains a user handoff, after which the queued run resumes.
 - Background run persistence across ordinary navigation and Workday SPA stage changes.
 - Verified identity/contact/link/city/country fields, native select controls, and PDF resume upload.
 - Candidate-approved stable declaration rules.

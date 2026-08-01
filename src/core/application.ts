@@ -1,4 +1,4 @@
-export type Provider = 'workday' | 'lever' | 'greenhouse' | 'ashby' | 'generic';
+export type Provider = 'workday' | 'lever' | 'greenhouse' | 'ashby' | 'successfactors' | 'generic';
 export type FieldKind = 'text' | 'textarea' | 'checkbox' | 'radio' | 'file' | 'select' | 'combobox' | 'unknown';
 export type FieldIntent =
   | 'first_name' | 'last_name' | 'full_name' | 'email' | 'phone' | 'city' | 'country'

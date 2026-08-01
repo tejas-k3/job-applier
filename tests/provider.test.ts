@@ -7,5 +7,6 @@ describe('provider detection', () => {
     expect(detectProvider('https://jobs.lever.co/acme/123')).toBe('lever');
     expect(detectProvider('https://boards.greenhouse.io/acme/jobs/123')).toBe('greenhouse');
     expect(detectProvider('https://jobs.ashbyhq.com/acme/123')).toBe('ashby');
+    expect(detectProvider('https://career55.sapsf.eu/careers?company=volvoinfor')).toBe('successfactors');
   });
 });

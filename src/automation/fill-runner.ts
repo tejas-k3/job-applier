@@ -75,6 +75,12 @@ function choiceMatchesAnswer(control: HTMLInputElement, answer: boolean): boolea
   return answer ? /\b(yes|true|agree|accept)\b/.test(choice) : /\b(no|false|disagree|decline)\b/.test(choice);
 }
 
+function workdayStartButton(): HTMLButtonElement | undefined {
+  return Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
+    /^apply manually$/i.test((button.innerText || button.textContent || '').trim())
+  );
+}
+
 export async function runFill(profile: CandidateProfile, resume?: ResumeRecord): Promise<FillReport> {
   const provider = detectProvider(location.href);
   const stage = provider === 'workday' ? detectWorkdayStage(visibleHeadings()) : undefined;
@@ -82,6 +88,19 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
   if (ashbyApply && !document.querySelector('input, textarea, select')) {
     ashbyApply.click();
     return { provider, stage, items: [], nextAction: 'advanced' };
+  }
+  const workdayStart = provider === 'workday' ? workdayStartButton() : undefined;
+  if (workdayStart) {
+    workdayStart.click();
+    return { provider, stage, items: [], nextAction: 'advanced' };
+  }
+  if (provider === 'workday' && stage === 'account') {
+    return {
+      provider,
+      stage,
+      items: [item({ key: 'workday-auth', label: 'Workday sign in', kind: 'unknown', intent: 'unknown', required: true, visible: true }, 'blocked', 'Sign in or create an account, then resume background fill.')],
+      nextAction: 'waiting'
+    };
   }
   const items: FillItem[] = [];
   const controls = inspectControls().filter(({ field }) => field.visible);
