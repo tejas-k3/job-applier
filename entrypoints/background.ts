@@ -1,7 +1,7 @@
 import type { RuntimeMessage } from '../src/core/messages';
 import { getProfile, getResume, saveProfile, saveResume } from '../src/storage/profile-store';
 import { getRuns, removeRun, upsertRun } from '../src/storage/run-store';
-import { detectProvider } from '../src/adapters/provider';
+import { detectProvider, isSupportedApplicationUrl } from '../src/adapters/provider';
 
 async function fillTab(tabId: number, url = '') {
   const profile = await getProfile();
@@ -30,6 +30,28 @@ async function fillTab(tabId: number, url = '') {
   return report;
 }
 
+async function fillSupportedTabs() {
+  const profile = await getProfile();
+  if (!profile) return { ok: false, error: 'Save your candidate profile first.' };
+
+  const tabs = await chrome.tabs.query({});
+  const runs = await getRuns();
+  const candidates = tabs.filter((tab) => tab.id !== undefined && isSupportedApplicationUrl(tab.url ?? ''));
+  const eligible = candidates.filter((tab) => {
+    const run = runs.find((item) => item.tabId === tab.id);
+    return !run || run.status === 'stopped' || run.status === 'failed';
+  });
+  const results = await Promise.all(eligible.map((tab) => fillTab(tab.id!, tab.url ?? '')));
+  const started = results.filter((result) => result.ok).length;
+  return {
+    ok: true,
+    started,
+    found: candidates.length,
+    skipped: candidates.length - eligible.length,
+    failed: results.length - started
+  };
+}
+
 export default defineBackground(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
 
@@ -49,6 +71,7 @@ export default defineBackground(() => {
           const response = await fillTab(tab.id, tab.url ?? '');
           return sendResponse(response);
         }
+        case 'FILL_SUPPORTED_TABS': return sendResponse(await fillSupportedTabs());
         case 'STOP_ACTIVE_TAB': {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
           if (tab?.id) {

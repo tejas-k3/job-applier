@@ -53,6 +53,15 @@ function App() {
     setRuns(updated.runs);
   }
 
+  async function fillSupportedTabs() {
+    const result = await send<{ ok: boolean; error?: string; found?: number; started?: number; skipped?: number; failed?: number }>({ type: 'FILL_SUPPORTED_TABS' });
+    setStatus(result.ok
+      ? `Found ${result.found ?? 0} supported application tab(s); started ${result.started ?? 0}, skipped ${result.skipped ?? 0}, failed ${result.failed ?? 0}.`
+      : (result.error ?? 'Unable to scan application tabs.'));
+    const updated = await send<{ runs: ApplicationRun[] }>({ type: 'GET_RUNS' });
+    setRuns(updated.runs);
+  }
+
   async function stopTab() {
     await send<{ ok: boolean }>({ type: 'STOP_ACTIVE_TAB' });
     setStatus('Stopped background filling for this tab.');
@@ -84,7 +93,7 @@ function App() {
     <h1>Job Applier</h1><p className="sub">Workday-first safe fill. You review and submit.</p>
     <section><h2>1. Candidate profile</h2><textarea value={text} onChange={(event) => setText(event.target.value)} spellCheck={false} /><div className="row"><button onClick={saveProfile}>Save profile</button><button className="secondary" onClick={exportProfile}>Export JSON</button></div></section>
     <section><h2>2. PDF resume</h2><p>{resumeName}</p><input type="file" accept="application/pdf" onChange={(event) => void chooseResume(event.target.files?.[0])} /></section>
-    <section><h2>3. Run current job tab</h2><button className="fill" onClick={() => void fillTab()}>Start background fill</button><button className="secondary" onClick={() => void stopTab()}>Stop this tab</button><p className="status">{status}</p></section>
+    <section><h2>3. Fill application tabs</h2><button className="fill" onClick={() => void fillSupportedTabs()}>Fill all supported tabs</button><button className="secondary" onClick={() => void fillTab()}>Fill current tab</button><button className="secondary" onClick={() => void stopTab()}>Stop this tab</button><p className="status">{status}</p><p className="sub">Scans all open tabs without focusing them. It only queues known job-application URLs on supported portals.</p></section>
     <section><h2>LinkedIn Easy Apply</h2><p>Manual copy-assist only. LinkedIn form filling and clicks are never automated.</p><button className="secondary" onClick={() => void copyLinkedInBasics()}>Copy profile basics</button></section>
     <section><h2>Application queue</h2>{runs.length ? <ul className="runs">{runs.map((run) => <li key={run.tabId}><strong>{run.provider}</strong> · {run.status}<br /><small>{run.message}</small></li>)}</ul> : <p>No active application runs.</p>}</section>
   </main>;

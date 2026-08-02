@@ -8,6 +8,7 @@ export type RuntimeMessage =
   | { type: 'SAVE_RESUME'; resume: ResumeRecord }
   | { type: 'GET_RESUME_META' }
   | { type: 'FILL_ACTIVE_TAB' }
+  | { type: 'FILL_SUPPORTED_TABS' }
   | { type: 'STOP_ACTIVE_TAB' }
   | { type: 'GET_RUNS' }
   | { type: 'PAGE_READY' }
