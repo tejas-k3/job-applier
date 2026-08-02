@@ -29,6 +29,7 @@ export function intentForLabel(label: string, kind: FieldKind, identifier = ''):
   if (/email/.test(label)) return 'email';
   if (/nationality/.test(label)) return 'country';
   if (/\b(phone|mobile|telephone)\b/.test(label)) return 'phone';
+  if (/how.*hear|where.*hear|how.*find|where.*find|source.*application|source.*candidate/.test(label)) return 'application_source';
   if (/linkedin/.test(label)) return 'linkedin';
   if (/github/.test(label)) return 'github';
   if (/portfolio|personal website|website url/.test(label)) return 'portfolio';

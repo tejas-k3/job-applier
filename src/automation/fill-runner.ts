@@ -75,6 +75,26 @@ function choiceMatchesAnswer(control: HTMLInputElement, answer: boolean): boolea
   return answer ? /\b(yes|true|agree|accept)\b/.test(choice) : /\b(no|false|disagree|decline)\b/.test(choice);
 }
 
+function isCareerSiteOption(value: string): boolean {
+  return /\b(career|careers)\b.*\b(site|website|page)\b|\bcompany\b.*\bwebsite\b|\bwebsite\b.*\bcompany\b/.test(value.trim().toLowerCase());
+}
+
+async function fillApplicationSource(control: Control): Promise<boolean> {
+  if (control instanceof HTMLSelectElement) {
+    const option = Array.from(control.options).find((candidate) => isCareerSiteOption(candidate.text));
+    return option ? setValue(control, option.value) : false;
+  }
+  if (control.getAttribute('role') === 'combobox') {
+    if (!setValue(control, 'Career website')) return false;
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    const option = Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find((candidate) => isCareerSiteOption(candidate.innerText || candidate.textContent || ''));
+    if (!option) return false;
+    option.click();
+    return true;
+  }
+  return setValue(control, 'Career website');
+}
+
 function workdayStartButton(): HTMLButtonElement | undefined {
   return Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
     /^apply manually$/i.test((button.innerText || button.textContent || '').trim())
@@ -116,6 +136,11 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
     if (field.intent === 'resume') {
       if (resume && control instanceof HTMLInputElement && setResume(control, resume)) items.push(item(field, 'filled', `Uploaded ${resume.name}`));
       else items.push(item(field, 'blocked', 'Resume PDF is needed'));
+      continue;
+    }
+    if (field.intent === 'application_source') {
+      if (await fillApplicationSource(control)) items.push(item(field, 'filled', 'Selected the available career website source'));
+      else items.push(item(field, 'blocked', 'No career website option was available; select a truthful source manually'));
       continue;
     }
     if (field.intent === 'family_employment_conflict' || field.intent === 'restrictive_covenant' || field.intent === 'profile_accuracy') {

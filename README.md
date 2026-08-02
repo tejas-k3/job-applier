@@ -27,6 +27,7 @@ npm run dev
 - Bulk scan/queue for all open supported application tabs; it deliberately ignores careers homepages and unrelated tabs.
 - Verified identity/contact/link/city/country fields, native select controls, and PDF resume upload.
 - Candidate-approved stable declaration rules.
+- “How did you hear about us?” is answered only with an available **career website** option; otherwise it is left for review.
 - A hard stop for authentication, CAPTCHA, MFA, email verification, unknown required data, and unrecognized declarations.
 - User-initiated generic custom-portal mode for the currently selected tab.
 - LinkedIn Easy Apply copy-assist only; it never reads, fills, clicks, or submits on LinkedIn.

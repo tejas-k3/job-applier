@@ -51,4 +51,22 @@ describe('runFill', () => {
     expect(result.items.some((item) => item.state === 'unresolved')).toBe(true);
     expect(clicked).not.toHaveBeenCalled();
   });
+
+  it('selects a real career-website source option instead of guessing', async () => {
+    document.body.innerHTML = `<label>How did you hear about us?<select required><option value="">Choose</option><option value="linkedin">LinkedIn</option><option value="careers">Company careers website</option></select></label>`;
+
+    const result = await runFill(profile);
+
+    expect((document.querySelector('select') as HTMLSelectElement).value).toBe('careers');
+    expect(result.items.some((entry) => entry.field.intent === 'application_source' && entry.state === 'filled')).toBe(true);
+  });
+
+  it('does not choose a non-career source when the preferred answer is absent', async () => {
+    document.body.innerHTML = `<label>Where did you hear about us?<select required><option value="">Choose</option><option value="linkedin">LinkedIn</option></select></label>`;
+
+    const result = await runFill(profile);
+
+    expect((document.querySelector('select') as HTMLSelectElement).value).toBe('');
+    expect(result.items.some((entry) => entry.field.intent === 'application_source' && entry.state === 'blocked')).toBe(true);
+  });
 });
