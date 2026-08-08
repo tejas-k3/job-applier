@@ -41,12 +41,16 @@ describe('attestation mapping', () => {
 describe('repeatable profile data', () => {
   it('maps sequential work-experience fields', () => {
     const richProfile = { ...profile, experience: [
-      { company: 'Acme', title: 'Backend Engineer', summary: 'Built APIs' },
-      { company: 'Globex', title: 'Platform Engineer', summary: 'Improved reliability' }
-    ] };
+      { company: 'Acme', title: 'Backend Engineer', summary: 'Built APIs', start_date: '2021-01-01', end_date: '2023-06-01' },
+      { company: 'Globex', title: 'Platform Engineer', summary: 'Improved reliability', start_date: '2023-07-01' }
+    ], education: [{ school: 'Example University', degree: 'B.Tech', start_date: '2017-08-01', end_date: '2021-05-01' }] };
     expect(profileValueForOccurrence('Employer name', richProfile, 0)).toBe('Acme');
     expect(profileValueForOccurrence('Employer name', richProfile, 1)).toBe('Globex');
     expect(profileValueForOccurrence('Job title', richProfile, 1)).toBe('Platform Engineer');
+    expect(profileValueForOccurrence('Work experience start date', richProfile, 0)).toBe('2021-01-01');
+    expect(profileValueForOccurrence('Work experience end date', richProfile, 0)).toBe('2023-06-01');
+    expect(profileValueForOccurrence('Education start date', richProfile, 0)).toBe('2017-08-01');
+    expect(profileValueForOccurrence('University end date', richProfile, 0)).toBe('2021-05-01');
   });
 });
 

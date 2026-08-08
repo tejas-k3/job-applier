@@ -23,13 +23,20 @@ export function profileValueForOccurrence(label: string, profile: CandidateProfi
   if (/city/.test(normalized)) return identity.location.city;
   if (/country/.test(normalized)) return identity.location.country;
   const experience = profile.experience[occurrence];
+  const education = profile.education[occurrence];
+  const isEducation = /\b(education|school|university|college|degree|major|field of study)\b/.test(normalized);
+  if (/\b(start|begin) date\b/.test(normalized)) {
+    return isEducation ? education?.start_date : experience?.start_date;
+  }
+  if (/\b(end|finish) date\b/.test(normalized)) {
+    return isEducation ? education?.end_date : experience?.end_date;
+  }
   if (experience) {
     if (/\b(company|employer|organization)\b/.test(normalized)) return experience.company;
     if (/\b(job title|position title|title)\b/.test(normalized)) return experience.title;
     if (/\b(description|responsibilities|summary)\b/.test(normalized)) return experience.summary;
     if (/\b(work location|employer location)\b/.test(normalized)) return experience.location;
   }
-  const education = profile.education[occurrence];
   if (education) {
     if (/\b(school|university|college|institution)\b/.test(normalized)) return education.school;
     if (/\b(degree)\b/.test(normalized)) return education.degree;
