@@ -10,6 +10,9 @@ export type RuntimeMessage =
   | { type: 'FILL_ACTIVE_TAB' }
   | { type: 'FILL_SUPPORTED_TABS' }
   | { type: 'STOP_ACTIVE_TAB' }
+  | { type: 'STOP_TAB'; tabId: number }
+  | { type: 'RESUME_TAB'; tabId: number }
+  | { type: 'OPEN_TAB'; tabId: number }
   | { type: 'GET_RUNS' }
   | { type: 'PAGE_READY' }
   | { type: 'FILL_WORKDAY'; profile: CandidateProfile; resume?: ResumeRecord };

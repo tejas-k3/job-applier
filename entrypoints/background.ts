@@ -52,6 +52,11 @@ async function fillSupportedTabs() {
   };
 }
 
+async function stopTab(tabId: number) {
+  const previous = (await getRuns()).find((run) => run.tabId === tabId);
+  if (previous) await upsertRun({ ...previous, status: 'stopped', message: 'Stopped by candidate', updatedAt: new Date().toISOString() });
+}
+
 export default defineBackground(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
 
@@ -74,12 +79,16 @@ export default defineBackground(() => {
         case 'FILL_SUPPORTED_TABS': return sendResponse(await fillSupportedTabs());
         case 'STOP_ACTIVE_TAB': {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-          if (tab?.id) {
-            const previous = (await getRuns()).find((run) => run.tabId === tab.id);
-            if (previous) await upsertRun({ ...previous, status: 'stopped', message: 'Stopped by candidate', updatedAt: new Date().toISOString() });
-          }
+          if (tab?.id) await stopTab(tab.id);
           return sendResponse({ ok: true });
         }
+        case 'STOP_TAB': await stopTab(message.tabId); return sendResponse({ ok: true });
+        case 'RESUME_TAB': {
+          const tab = await chrome.tabs.get(message.tabId);
+          if (!tab?.id) return sendResponse({ ok: false, error: 'Application tab is no longer open.' });
+          return sendResponse(await fillTab(tab.id, tab.url ?? ''));
+        }
+        case 'OPEN_TAB': await chrome.tabs.update(message.tabId, { active: true }); return sendResponse({ ok: true });
         case 'GET_RUNS': return sendResponse({ runs: await getRuns() });
         case 'PAGE_READY': {
           const tabId = _sender.tab?.id;

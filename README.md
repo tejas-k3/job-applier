@@ -25,6 +25,7 @@ npm run dev
 - Workday's initial **Apply Manually** screen advances automatically; account creation/sign-in remains a user handoff, after which the queued run resumes.
 - Background run persistence across ordinary navigation and Workday SPA stage changes.
 - Bulk scan/queue for all open supported application tabs; it deliberately ignores careers homepages and unrelated tabs.
+- Per-tab queue controls: open, stop, and resume without needing to rediscover the application.
 - Verified identity/contact/link/city/country fields, native select controls, and PDF resume upload.
 - Candidate-approved stable declaration rules.
 - “How did you hear about us?” is answered only with an available **career website** option; otherwise it is left for review.

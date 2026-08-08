@@ -67,6 +67,13 @@ function App() {
     setStatus('Stopped background filling for this tab.');
   }
 
+  async function controlRun(type: 'STOP_TAB' | 'RESUME_TAB' | 'OPEN_TAB', tabId: number) {
+    const result = await send<{ ok: boolean; error?: string }>({ type, tabId });
+    setStatus(result.ok ? (type === 'OPEN_TAB' ? 'Opened application tab.' : type === 'RESUME_TAB' ? 'Resumed background fill.' : 'Stopped background fill.') : (result.error ?? 'Unable to update this run.'));
+    const updated = await send<{ runs: ApplicationRun[] }>({ type: 'GET_RUNS' });
+    setRuns(updated.runs);
+  }
+
   async function copyLinkedInBasics() {
     try {
       const profile: unknown = JSON.parse(text);
@@ -95,7 +102,7 @@ function App() {
     <section><h2>2. PDF resume</h2><p>{resumeName}</p><input type="file" accept="application/pdf" onChange={(event) => void chooseResume(event.target.files?.[0])} /></section>
     <section><h2>3. Fill application tabs</h2><button className="fill" onClick={() => void fillSupportedTabs()}>Fill all supported tabs</button><button className="secondary" onClick={() => void fillTab()}>Fill current tab</button><button className="secondary" onClick={() => void stopTab()}>Stop this tab</button><p className="status">{status}</p><p className="sub">Scans all open tabs without focusing them. It only queues known job-application URLs on supported portals.</p></section>
     <section><h2>LinkedIn Easy Apply</h2><p>Manual copy-assist only. LinkedIn form filling and clicks are never automated.</p><button className="secondary" onClick={() => void copyLinkedInBasics()}>Copy profile basics</button></section>
-    <section><h2>Application queue</h2>{runs.length ? <ul className="runs">{runs.map((run) => <li key={run.tabId}><strong>{run.provider}</strong> · {run.status}<br /><small>{run.message}</small></li>)}</ul> : <p>No active application runs.</p>}</section>
+    <section><h2>Application queue</h2>{runs.length ? <ul className="runs">{runs.map((run) => <li key={run.tabId}><strong>{run.provider}</strong> · {run.status}<br /><small>{run.message}</small><div className="row"><button className="secondary" onClick={() => void controlRun('OPEN_TAB', run.tabId)}>Open</button>{run.status === 'filling' ? <button className="secondary" onClick={() => void controlRun('STOP_TAB', run.tabId)}>Stop</button> : <button className="secondary" onClick={() => void controlRun('RESUME_TAB', run.tabId)}>Resume</button>}</div></li>)}</ul> : <p>No active application runs.</p>}</section>
   </main>;
 }
 
