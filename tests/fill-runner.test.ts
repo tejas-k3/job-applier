@@ -69,4 +69,13 @@ describe('runFill', () => {
     expect((document.querySelector('select') as HTMLSelectElement).value).toBe('');
     expect(result.items.some((entry) => entry.field.intent === 'application_source' && entry.state === 'blocked')).toBe(true);
   });
+
+  it('stops for authentication and verification handoffs', async () => {
+    document.body.innerHTML = `<h1>Sign in</h1><label>Password <input type="password" required></label>`;
+
+    const result = await runFill(profile);
+
+    expect(result.nextAction).toBe('waiting');
+    expect(result.items[0]?.message).toMatch(/sign in/i);
+  });
 });

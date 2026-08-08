@@ -101,6 +101,14 @@ function workdayStartButton(): HTMLButtonElement | undefined {
   );
 }
 
+function userHandoffReason(): string | undefined {
+  const visibleText = (document.body.innerText || document.body.textContent || '').toLowerCase().slice(0, 12000);
+  if (/captcha|i am not a robot|recaptcha|hcaptcha/.test(visibleText)) return 'CAPTCHA requires candidate completion.';
+  if (/one.time (passcode|password)|verification code|security code|two.factor|multi.factor|mfa\b|enter.*code.*sent/.test(visibleText)) return 'Verification code or MFA requires candidate completion.';
+  if (document.querySelector('input[type="password"]')) return 'Sign in or account creation requires candidate completion.';
+  return undefined;
+}
+
 export async function runFill(profile: CandidateProfile, resume?: ResumeRecord): Promise<FillReport> {
   const provider = detectProvider(location.href);
   const stage = provider === 'workday' ? detectWorkdayStage(visibleHeadings()) : undefined;
@@ -119,6 +127,15 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
       provider,
       stage,
       items: [item({ key: 'workday-auth', label: 'Workday sign in', kind: 'unknown', intent: 'unknown', required: true, visible: true }, 'blocked', 'Sign in or create an account, then resume background fill.')],
+      nextAction: 'waiting'
+    };
+  }
+  const handoff = userHandoffReason();
+  if (handoff) {
+    return {
+      provider,
+      stage,
+      items: [item({ key: 'candidate-handoff', label: 'Candidate action required', kind: 'unknown', intent: 'unknown', required: true, visible: true }, 'blocked', handoff)],
       nextAction: 'waiting'
     };
   }
