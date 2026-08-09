@@ -45,11 +45,28 @@ function setResume(control: HTMLInputElement, resume: ResumeRecord): boolean {
   return Boolean(control.files?.length);
 }
 
-async function settleCombobox(control: Control, value: string): Promise<void> {
-  if (control.getAttribute('role') !== 'combobox') return;
+function clearValue(control: Control): void {
+  if (control instanceof HTMLSelectElement) {
+    control.selectedIndex = 0;
+  } else {
+    const prototype = control instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(prototype, 'value')?.set?.call(control, '');
+  }
+  control.dispatchEvent(new Event('input', { bubbles: true }));
+  control.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+async function settleCombobox(control: Control, value: string): Promise<boolean> {
+  if (control.getAttribute('role') !== 'combobox') return true;
   await new Promise((resolve) => setTimeout(resolve, 120));
   const options = Array.from(document.querySelectorAll<HTMLElement>('[role="option"]'));
-  options.find((option) => option.innerText.trim().toLowerCase() === value.trim().toLowerCase())?.click();
+  const option = options.find((candidate) => (candidate.innerText || candidate.textContent || '').trim().toLowerCase() === value.trim().toLowerCase());
+  if (!option) {
+    clearValue(control);
+    return false;
+  }
+  option.click();
+  return true;
 }
 
 function item(field: NormalizedField, state: FillItem['state'], message: string): FillItem {
@@ -169,7 +186,10 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
     }
     if (field.intent === 'application_source') {
       if (await fillApplicationSource(control)) items.push(item(field, 'filled', 'Selected the available career website source'));
-      else items.push(item(field, 'blocked', 'No career website option was available; select a truthful source manually'));
+      else {
+        clearValue(control);
+        items.push(item(field, 'blocked', 'No career website option was available; select a truthful source manually'));
+      }
       continue;
     }
     if (field.intent === 'family_employment_conflict' || field.intent === 'restrictive_covenant' || field.intent === 'profile_accuracy') {
@@ -205,10 +225,9 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
     if ((field.intent === 'work_authorization' || field.intent === 'requires_sponsorship') && control.getAttribute('role') === 'combobox') {
       const answer = screeningAnswerForLabel(field.label, profile);
       if (answer === undefined) items.push(item(field, 'blocked', 'Screening answer is not unambiguous in the profile'));
-      else if (setValue(control, answer ? 'Yes' : 'No')) {
-        await settleCombobox(control, answer ? 'Yes' : 'No');
+      else if (setValue(control, answer ? 'Yes' : 'No') && await settleCombobox(control, answer ? 'Yes' : 'No')) {
         items.push(item(field, 'filled', 'Applied locked profile screening answer'));
-      } else items.push(item(field, 'failed', 'Combobox rejected the screening answer'));
+      } else items.push(item(field, 'blocked', 'No matching screening choice was available'));
       continue;
     }
     const occurrence = labelOccurrences.get(field.label) ?? 0;
@@ -218,10 +237,9 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
       if (field.required) items.push(item(field, 'unresolved', 'Required field has no profile value'));
       continue;
     }
-    if (setValue(control, value)) {
-      await settleCombobox(control, value);
+    if (setValue(control, value) && await settleCombobox(control, value)) {
       items.push(item(field, 'filled', 'Value verified'));
-    } else items.push(item(field, 'failed', 'Control rejected the value'));
+    } else items.push(item(field, 'failed', control.getAttribute('role') === 'combobox' ? 'No matching combobox option was available' : 'Control rejected the value'));
   }
 
   for (const { control, field } of controls.filter(({ field }) => field.required)) {

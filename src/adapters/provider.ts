@@ -1,7 +1,12 @@
 import type { Provider } from '../core/application';
 
 export function detectProvider(url: string): Provider {
-  const host = new URL(url).hostname.toLowerCase();
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    return 'generic';
+  }
   if (host.includes('myworkdayjobs.com')) return 'workday';
   if (host === 'jobs.lever.co' || host.endsWith('.lever.co')) return 'lever';
   if (host === 'boards.greenhouse.io' || host === 'job-boards.greenhouse.io') return 'greenhouse';

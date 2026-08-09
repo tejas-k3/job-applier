@@ -78,4 +78,14 @@ describe('runFill', () => {
     expect(result.nextAction).toBe('waiting');
     expect(result.items[0]?.message).toMatch(/sign in/i);
   });
+
+  it('requires a matching ARIA combobox option before reporting success', async () => {
+    document.body.innerHTML = `<label>Country <input role="combobox" required></label>`;
+
+    const result = await runFill(profile);
+
+    expect((document.querySelector('input') as HTMLInputElement).value).toBe('');
+    expect(result.items.some((entry) => entry.message.includes('combobox option'))).toBe(true);
+    expect(result.nextAction).toBe('waiting');
+  });
 });
