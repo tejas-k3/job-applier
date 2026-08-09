@@ -15,7 +15,7 @@ npm run dev
 2. Open the Job Applier side panel from Chrome’s toolbar.
 3. Paste/edit the source-of-truth profile JSON. Start from [`docs/candidate-profile.example.json`](docs/candidate-profile.example.json).
 4. Click **Save profile**, select your PDF resume, and open a supported job application.
-5. Open as many supported application tabs as you want, then click **Fill all supported tabs**. It discovers known individual application URLs across all open windows and fills them without focusing those tabs. **Fill current tab** remains available for a supported custom portal.
+5. Turn on **Watch new supported job tabs and fill in background**, then open as many supported application tabs as you want. Each is queued after loading without focusing it. **Fill all supported tabs now** scans tabs already open; **Fill current tab** remains available for a supported custom portal.
 6. The queue displays whether the run is filling, waiting for a required answer, ready for review, or failed with the exact reason.
 7. Review the completed application and submit it yourself.
 
@@ -25,6 +25,7 @@ npm run dev
 - Workday's initial **Apply Manually** screen advances automatically; account creation/sign-in remains a user handoff, after which the queued run resumes.
 - Background run persistence across ordinary navigation and Workday SPA stage changes.
 - Bulk scan/queue for all open supported application tabs; it deliberately ignores careers homepages and unrelated tabs.
+- Optional background watcher that begins a run when a newly opened supported application tab finishes loading; it never steals focus.
 - Per-tab queue controls: open, stop, and resume without needing to rediscover the application.
 - Verified identity/contact/link/city/country fields, work/education dates, native select controls, and PDF resume upload.
 - Candidate-approved stable declaration rules.

@@ -1,6 +1,7 @@
 import type { RuntimeMessage } from '../src/core/messages';
 import { getProfile, getResume, saveProfile, saveResume } from '../src/storage/profile-store';
 import { getRuns, removeRun, upsertRun } from '../src/storage/run-store';
+import { getAutoFillEnabled, setAutoFillEnabled } from '../src/storage/automation-store';
 import { detectProvider, isSupportedApplicationUrl } from '../src/adapters/provider';
 
 type FillResponse = { ok: boolean; report?: string[]; nextAction?: 'advanced' | 'review' | 'waiting'; provider?: string; stage?: string; error?: string };
@@ -100,6 +101,13 @@ export default defineBackground(() => {
           const resume = await getResume();
           return sendResponse({ resume: resume ? { name: resume.name, savedAt: resume.savedAt } : null });
         }
+        case 'GET_AUTO_FILL_ENABLED': return sendResponse({ enabled: await getAutoFillEnabled() });
+        case 'SET_AUTO_FILL_ENABLED': {
+          if (message.enabled && !await getProfile()) return sendResponse({ ok: false, error: 'Save your candidate profile first.' });
+          await setAutoFillEnabled(message.enabled);
+          const result = message.enabled ? await fillSupportedTabs() : { ok: true, found: 0, started: 0, skipped: 0, failed: 0 };
+          return sendResponse(result);
+        }
         case 'FILL_ACTIVE_TAB': {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
           if (!tab?.id) return sendResponse({ ok: false, error: 'No active tab found.' });
@@ -136,8 +144,11 @@ export default defineBackground(() => {
     if (changeInfo.status !== 'complete') return;
     void (async () => {
       const run = (await getRuns()).find((item) => item.tabId === tabId);
-      if (!run || run.status !== 'filling') return;
-      await fillTab(tabId, tab.url ?? run.url);
+      if (run?.status === 'filling') {
+        await fillTab(tabId, tab.url ?? run.url);
+      } else if (!run && await getAutoFillEnabled() && isSupportedApplicationUrl(tab.url ?? '')) {
+        await fillTab(tabId, tab.url ?? '');
+      }
     })();
   });
 });

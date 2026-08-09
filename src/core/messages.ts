@@ -7,6 +7,8 @@ export type RuntimeMessage =
   | { type: 'SAVE_PROFILE'; profile: CandidateProfile }
   | { type: 'SAVE_RESUME'; resume: ResumeRecord }
   | { type: 'GET_RESUME_META' }
+  | { type: 'GET_AUTO_FILL_ENABLED' }
+  | { type: 'SET_AUTO_FILL_ENABLED'; enabled: boolean }
   | { type: 'FILL_ACTIVE_TAB' }
   | { type: 'FILL_SUPPORTED_TABS' }
   | { type: 'STOP_ACTIVE_TAB' }
