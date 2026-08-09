@@ -25,11 +25,15 @@ export function profileValueForOccurrence(label: string, profile: CandidateProfi
   const experience = profile.experience[occurrence];
   const education = profile.education[occurrence];
   const isEducation = /\b(education|school|university|college|degree|major|field of study)\b/.test(normalized);
-  if (/\b(start|begin) date\b/.test(normalized)) {
-    return isEducation ? education?.start_date : experience?.start_date;
-  }
-  if (/\b(end|finish) date\b/.test(normalized)) {
-    return isEducation ? education?.end_date : experience?.end_date;
+  const dateValue = /\b(start|begin)\b/.test(normalized) ? (isEducation ? education?.start_date : experience?.start_date)
+    : /\b(end|finish)\b/.test(normalized) ? (isEducation ? education?.end_date : experience?.end_date)
+      : undefined;
+  if (dateValue) {
+    const [, year, month, day] = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(dateValue) ?? [];
+    if (/\bmonth\b/.test(normalized) && month) return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][Number(month) - 1];
+    if (/\byear\b/.test(normalized) && year) return year;
+    if (/\bday\b/.test(normalized) && day) return String(Number(day));
+    return dateValue;
   }
   if (experience) {
     if (/\b(company|employer|organization)\b/.test(normalized)) return experience.company;

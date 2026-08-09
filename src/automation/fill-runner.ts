@@ -4,7 +4,7 @@ import { detectWorkdayStage, visibleHeadings } from '../adapters/workday';
 import type { FillItem, FillReport, NormalizedField } from '../core/application';
 import type { ResumeRecord } from '../core/messages';
 import type { CandidateProfile } from '../core/profile';
-import { matchingAttestationRule, profileValueForOccurrence, screeningAnswerForLabel } from '../core/field-mapping';
+import { matchingAttestationRule, normalizeText, profileValueForOccurrence, screeningAnswerForLabel } from '../core/field-mapping';
 
 type Control = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
@@ -14,10 +14,38 @@ function isFilled(control: Control): boolean {
   return Boolean(control.value);
 }
 
-function setValue(control: Control, value: string): boolean {
+type Choice = { label: string; value: string };
+
+function monthNumber(value: string): number | undefined {
+  const normalized = normalizeText(value);
+  const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+  const index = months.findIndex((month) => month === normalized || month.slice(0, 3) === normalized);
+  if (index >= 0) return index + 1;
+  const numeric = Number(normalized);
+  return Number.isInteger(numeric) && numeric >= 1 && numeric <= 12 ? numeric : undefined;
+}
+
+function matchingChoice(value: string, choices: Choice[], fieldLabel = ''): Choice | undefined {
+  const target = normalizeText(value);
+  const exact = choices.filter((choice) => normalizeText(choice.label) === target || normalizeText(choice.value) === target);
+  if (exact.length === 1) return exact[0];
+  if (/\bmonth\b/.test(normalizeText(fieldLabel))) {
+    const targetMonth = monthNumber(value);
+    const months = targetMonth === undefined ? [] : choices.filter((choice) => monthNumber(choice.label) === targetMonth || monthNumber(choice.value) === targetMonth);
+    if (months.length === 1) return months[0];
+  }
+  const contained = choices.filter((choice) => {
+    const label = normalizeText(choice.label);
+    const optionValue = normalizeText(choice.value);
+    return label.includes(target) || optionValue.includes(target);
+  });
+  return contained.length === 1 ? contained[0] : undefined;
+}
+
+function setValue(control: Control, value: string, fieldLabel = ''): boolean {
   if (!value || control.disabled || (!(control instanceof HTMLSelectElement) && control.readOnly)) return false;
   if (control instanceof HTMLSelectElement) {
-    const option = Array.from(control.options).find((candidate) => candidate.value === value || candidate.text.trim().toLowerCase() === value.trim().toLowerCase());
+    const option = matchingChoice(value, Array.from(control.options).map((candidate) => ({ label: candidate.text, value: candidate.value })), fieldLabel);
     if (!option) return false;
     control.value = option.value;
     control.dispatchEvent(new Event('input', { bubbles: true }));
@@ -56,11 +84,18 @@ function clearValue(control: Control): void {
   control.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-async function settleCombobox(control: Control, value: string): Promise<boolean> {
+function comboboxOptions(control: Control): HTMLElement[] {
+  const listboxId = control.getAttribute('aria-controls') ?? control.getAttribute('aria-owns');
+  const root = listboxId ? document.getElementById(listboxId) : document;
+  return Array.from(root?.querySelectorAll<HTMLElement>('[role="option"]') ?? []).filter((option) => Boolean(option.getClientRects().length));
+}
+
+async function settleCombobox(control: Control, value: string, fieldLabel = ''): Promise<boolean> {
   if (control.getAttribute('role') !== 'combobox') return true;
   await new Promise((resolve) => setTimeout(resolve, 120));
-  const options = Array.from(document.querySelectorAll<HTMLElement>('[role="option"]'));
-  const option = options.find((candidate) => (candidate.innerText || candidate.textContent || '').trim().toLowerCase() === value.trim().toLowerCase());
+  const options = comboboxOptions(control);
+  const choice = matchingChoice(value, options.map((candidate) => ({ label: candidate.innerText || candidate.textContent || '', value: candidate.getAttribute('data-value') ?? candidate.getAttribute('value') ?? '' })), fieldLabel);
+  const option = choice ? options.find((candidate) => (candidate.innerText || candidate.textContent || '') === choice.label) : undefined;
   if (!option) {
     clearValue(control);
     return false;
@@ -104,7 +139,7 @@ async function fillApplicationSource(control: Control): Promise<boolean> {
   if (control.getAttribute('role') === 'combobox') {
     if (!setValue(control, 'Career website')) return false;
     await new Promise((resolve) => setTimeout(resolve, 120));
-    const option = Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find((candidate) => isCareerSiteOption(candidate.innerText || candidate.textContent || ''));
+    const option = comboboxOptions(control).find((candidate) => isCareerSiteOption(candidate.innerText || candidate.textContent || ''));
     if (!option) return false;
     option.click();
     return true;
@@ -225,7 +260,7 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
     if ((field.intent === 'work_authorization' || field.intent === 'requires_sponsorship') && control.getAttribute('role') === 'combobox') {
       const answer = screeningAnswerForLabel(field.label, profile);
       if (answer === undefined) items.push(item(field, 'blocked', 'Screening answer is not unambiguous in the profile'));
-      else if (setValue(control, answer ? 'Yes' : 'No') && await settleCombobox(control, answer ? 'Yes' : 'No')) {
+      else if (setValue(control, answer ? 'Yes' : 'No', field.label) && await settleCombobox(control, answer ? 'Yes' : 'No', field.label)) {
         items.push(item(field, 'filled', 'Applied locked profile screening answer'));
       } else items.push(item(field, 'blocked', 'No matching screening choice was available'));
       continue;
@@ -237,7 +272,7 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
       if (field.required) items.push(item(field, 'unresolved', 'Required field has no profile value'));
       continue;
     }
-    if (setValue(control, value) && await settleCombobox(control, value)) {
+    if (setValue(control, value, field.label) && await settleCombobox(control, value, field.label)) {
       items.push(item(field, 'filled', 'Value verified'));
     } else items.push(item(field, 'failed', control.getAttribute('role') === 'combobox' ? 'No matching combobox option was available' : 'Control rejected the value'));
   }

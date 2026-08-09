@@ -88,4 +88,27 @@ describe('runFill', () => {
     expect(result.items.some((entry) => entry.message.includes('combobox option'))).toBe(true);
     expect(result.nextAction).toBe('waiting');
   });
+
+  it('selects a unique country label and Workday-style date dropdowns', async () => {
+    const datedProfile = { ...profile, experience: [{ ...profile.experience[0], start_date: '2021-01-01' }] };
+    document.body.innerHTML = `
+      <label>Country <select required><option value="">Choose</option><option value="IN">India (IN)</option></select></label>
+      <label>Work experience start month <select required><option value="">Choose</option><option value="01">January</option></select></label>
+      <label>Work experience start year <select required><option value="">Choose</option><option value="2021">2021</option></select></label>`;
+
+    const result = await runFill(datedProfile);
+
+    expect(Array.from(document.querySelectorAll('select')).map((control) => control.value)).toEqual(['IN', '01', '2021']);
+    expect(result.items.every((entry) => entry.state === 'filled')).toBe(true);
+  });
+
+  it('does not select an ambiguous dropdown option', async () => {
+    const usProfile = { ...profile, identity: { ...profile.identity, location: { ...profile.identity.location, country: 'United States' } } };
+    document.body.innerHTML = `<label>Country <select required><option value="">Choose</option><option value="US">United States</option><option value="UM">United States Minor Outlying Islands</option></select></label>`;
+
+    const result = await runFill(usProfile);
+
+    expect((document.querySelector('select') as HTMLSelectElement).value).toBe('US');
+    expect(result.items[0]?.state).toBe('filled');
+  });
 });
