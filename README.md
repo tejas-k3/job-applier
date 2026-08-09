@@ -1,6 +1,8 @@
 # Job Applier
 
-Workday-first Chrome extension for filling repeated application details from one candidate profile and PDF resume. It never clicks Submit.
+Chrome extension for filling repeated application details from one candidate profile and PDF resume. It never clicks Submit.
+
+Playful & experimental project being completely done by AI for real world pain.
 
 ## Use it locally
 
