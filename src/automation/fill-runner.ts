@@ -101,6 +101,13 @@ function workdayStartButton(): HTMLButtonElement | undefined {
   );
 }
 
+function n26ApplyLink(): HTMLAnchorElement | undefined {
+  if (location.hostname !== 'n26.com') return undefined;
+  return Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href]')).find((link) =>
+    /\/careers\/positions\/[^/]+\/apply(?:\?|$)/.test(link.href)
+  );
+}
+
 function userHandoffReason(): string | undefined {
   const visibleText = (document.body.innerText || document.body.textContent || '').toLowerCase().slice(0, 12000);
   if (/captcha|i am not a robot|recaptcha|hcaptcha/.test(visibleText)) return 'CAPTCHA requires candidate completion.';
@@ -115,6 +122,11 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
   const ashbyApply = provider === 'ashby' ? Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find((button) => /^apply for this job$/i.test((button.innerText || button.textContent || '').trim())) : undefined;
   if (ashbyApply && !document.querySelector('input, textarea, select')) {
     ashbyApply.click();
+    return { provider, stage, items: [], nextAction: 'advanced' };
+  }
+  const n26Apply = n26ApplyLink();
+  if (n26Apply && !document.querySelector('input, textarea, select')) {
+    n26Apply.click();
     return { provider, stage, items: [], nextAction: 'advanced' };
   }
   const workdayStart = provider === 'workday' ? workdayStartButton() : undefined;

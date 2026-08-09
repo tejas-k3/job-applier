@@ -8,6 +8,7 @@ describe('provider detection', () => {
     expect(detectProvider('https://boards.greenhouse.io/acme/jobs/123')).toBe('greenhouse');
     expect(detectProvider('https://jobs.ashbyhq.com/acme/123')).toBe('ashby');
     expect(detectProvider('https://career55.sapsf.eu/careers?company=volvoinfor')).toBe('successfactors');
+    expect(detectProvider('https://n26.com/en-eu/careers/positions/7996816')).toBe('greenhouse');
   });
 });
 
@@ -20,6 +21,7 @@ describe('bulk application URL detection', () => {
     expect(isSupportedApplicationUrl('https://jobs.ashbyhq.com/acme/abc123')).toBe(true);
     expect(isSupportedApplicationUrl('https://career55.sapsf.eu/careers?company=volvoinfor')).toBe(false);
     expect(isSupportedApplicationUrl('https://career55.sapsf.eu/career/job/123?company=volvoinfor')).toBe(true);
+    expect(isSupportedApplicationUrl('https://n26.com/en-eu/careers/positions/7996816')).toBe(true);
     expect(isSupportedApplicationUrl('https://example.com/about')).toBe(false);
   });
 });

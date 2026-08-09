@@ -4,7 +4,7 @@ export default defineConfig({
   manifest: {
     name: 'Job Applier',
     description: 'Workday-first application filling with an explicit review step.',
-    permissions: ['storage', 'tabs', 'sidePanel', 'activeTab', 'scripting'],
+    permissions: ['storage', 'tabs', 'sidePanel', 'activeTab', 'scripting', 'webNavigation'],
     host_permissions: [
       'https://*.myworkdayjobs.com/*',
       'https://jobs.lever.co/*',
@@ -13,7 +13,8 @@ export default defineConfig({
       'https://jobs.ashbyhq.com/*',
       'https://bolt.eu/*',
       'https://wise.jobs/*',
-      'https://*.sapsf.eu/*'
+      'https://*.sapsf.eu/*',
+      'https://n26.com/*'
     ],
     side_panel: { default_path: 'sidepanel.html' },
     action: { default_title: 'Open Job Applier' }

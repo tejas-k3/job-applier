@@ -10,7 +10,8 @@ export default defineContentScript({
     'https://jobs.ashbyhq.com/*',
     'https://bolt.eu/*',
     'https://wise.jobs/*',
-    'https://*.sapsf.eu/*'
+    'https://*.sapsf.eu/*',
+    'https://n26.com/*'
   ],
   allFrames: true,
   main() {

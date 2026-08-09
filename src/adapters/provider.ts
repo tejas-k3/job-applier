@@ -7,6 +7,7 @@ export function detectProvider(url: string): Provider {
   if (host === 'boards.greenhouse.io' || host === 'job-boards.greenhouse.io') return 'greenhouse';
   if (host === 'jobs.ashbyhq.com' || host.endsWith('.ashbyhq.com')) return 'ashby';
   if (host.endsWith('.sapsf.eu') || host.endsWith('.successfactors.com')) return 'successfactors';
+  if (host === 'n26.com') return 'greenhouse';
   return 'generic';
 }
 
@@ -32,6 +33,7 @@ export function isSupportedApplicationUrl(url: string): boolean {
   if (host.endsWith('.sapsf.eu') || host.endsWith('.successfactors.com')) return /\/career\/job\//.test(path) || parsed.searchParams.has('jobId');
   if (host === 'bolt.eu') return /\/careers\/positions\//.test(path);
   if (host === 'wise.jobs') return /\/job\/|\/workflow$/i.test(path) || parsed.searchParams.has('workflowId');
+  if (host === 'n26.com') return /\/careers\/positions\/[^/]+(?:\/apply)?$/.test(path);
   return false;
 }
 

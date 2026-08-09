@@ -3,25 +3,55 @@ import { getProfile, getResume, saveProfile, saveResume } from '../src/storage/p
 import { getRuns, removeRun, upsertRun } from '../src/storage/run-store';
 import { detectProvider, isSupportedApplicationUrl } from '../src/adapters/provider';
 
+type FillResponse = { ok: boolean; report?: string[]; nextAction?: 'advanced' | 'review' | 'waiting'; provider?: string; stage?: string; error?: string };
+
+async function sendFillToFrame(tabId: number, frameId: number, message: RuntimeMessage): Promise<FillResponse | undefined> {
+  try {
+    return await chrome.tabs.sendMessage(tabId, message, { frameId }) as FillResponse;
+  } catch {
+    try {
+      await chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, files: ['content-scripts/content.js'] });
+      return await chrome.tabs.sendMessage(tabId, message, { frameId }) as FillResponse;
+    } catch {
+      return undefined;
+    }
+  }
+}
+
+function combineFrameReports(reports: FillResponse[]): FillResponse {
+  const successful = reports.filter((report) => report.ok);
+  if (!successful.length) return { ok: false, error: reports.find((report) => report.error)?.error ?? 'Could not connect to this application page.' };
+  const reportsWithFields = successful.filter((report) => report.report?.length);
+  const relevant = reportsWithFields.length ? reportsWithFields : successful;
+  const nextAction = relevant.some((report) => report.nextAction === 'waiting')
+    ? 'waiting'
+    : relevant.some((report) => report.nextAction === 'advanced')
+      ? 'advanced'
+      : 'review';
+  return {
+    ok: true,
+    nextAction,
+    provider: relevant.find((report) => report.provider)?.provider,
+    stage: relevant.find((report) => report.stage)?.stage,
+    report: relevant.flatMap((report) => report.report ?? [])
+  };
+}
+
 async function fillTab(tabId: number, url = '') {
   const profile = await getProfile();
   if (!profile) return { ok: false, error: 'Save your candidate profile first.' };
   const resume = await getResume();
   await upsertRun({ tabId, url, provider: detectProvider(url), status: 'filling', message: 'Inspecting visible fields', updatedAt: new Date().toISOString() });
-  let response: unknown;
-  try {
-    response = await chrome.tabs.sendMessage(tabId, { type: 'FILL_WORKDAY', profile, resume });
-  } catch (error) {
-    try {
-      await chrome.scripting.executeScript({ target: { tabId }, files: ['content-scripts/content.js'] });
-      response = await chrome.tabs.sendMessage(tabId, { type: 'FILL_WORKDAY', profile, resume });
-    } catch (injectionError) {
-      const message = injectionError instanceof Error ? injectionError.message : (error instanceof Error ? error.message : 'Could not connect to this application page');
-      await upsertRun({ tabId, url, provider: detectProvider(url), status: 'failed', message, updatedAt: new Date().toISOString() });
-      return { ok: false, error: message };
-    }
+  const frames = await chrome.webNavigation.getAllFrames({ tabId });
+  const frameIds = (frames ?? [])
+    .filter((frame) => frame.frameId === 0 || isSupportedApplicationUrl(frame.url))
+    .map((frame) => frame.frameId);
+  const reports = await Promise.all((frameIds.length ? frameIds : [0]).map((frameId) => sendFillToFrame(tabId, frameId, { type: 'FILL_WORKDAY', profile, resume })));
+  const report = combineFrameReports(reports.filter((response): response is FillResponse => Boolean(response)));
+  if (!report.ok) {
+    await upsertRun({ tabId, url, provider: detectProvider(url), status: 'failed', message: report.error ?? 'Could not connect to this application page.', updatedAt: new Date().toISOString() });
+    return report;
   }
-  const report = response as { ok: boolean; report?: string[]; nextAction?: 'advanced' | 'review' | 'waiting'; stage?: string; error?: string };
   await upsertRun({
     tabId, url, provider: detectProvider(url),
     status: !report.ok ? 'failed' : report.nextAction === 'advanced' ? 'filling' : report.nextAction === 'waiting' ? 'waiting_for_user' : 'ready_for_review',
