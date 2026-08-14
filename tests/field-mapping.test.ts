@@ -23,6 +23,7 @@ describe('profileValueForLabel', () => {
     expect(profileValueForLabel('Name', profile)).toBe('Tejas K');
     expect(profileValueForLabel('State or Province', profile)).toBe('Telangana');
     expect(profileValueForLabel('Notice period', profile)).toBe('30 days');
+    expect(profileValueForLabel('Skills', { ...profile, skills: ['TypeScript', 'React'] })).toBe('TypeScript, React');
   });
 
   it('does not guess an unknown question', () => {

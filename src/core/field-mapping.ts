@@ -24,6 +24,7 @@ export function profileValueForOccurrence(label: string, profile: CandidateProfi
   if (/\b(state|province|region)\b/.test(normalized)) return identity.location.region;
   if (/country/.test(normalized)) return identity.location.country;
   if (/notice period|notice time|available to start|availability/.test(normalized)) return profile.employment.notice_period;
+  if (/\bskills?\b/.test(normalized)) return profile.skills.filter(Boolean).join(', ');
   const experience = profile.experience[occurrence];
   const education = profile.education[occurrence];
   const isEducation = /\b(education|school|university|college|degree|major|field of study)\b/.test(normalized);
