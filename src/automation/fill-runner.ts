@@ -123,7 +123,8 @@ function fillAshbyVisaChoice(profile: CandidateProfile): FillItem[] {
 }
 
 function choiceMatchesAnswer(control: HTMLInputElement, answer: boolean): boolean {
-  const choice = `${control.value} ${control.closest('label')?.innerText ?? ''}`.trim().toLowerCase();
+  const labels = Array.from(control.labels ?? []).map((label) => label.innerText || label.textContent || '').join(' ');
+  const choice = `${control.value} ${labels} ${control.closest('label')?.innerText ?? ''}`.trim().toLowerCase();
   return answer ? /\b(yes|true|agree|accept)\b/.test(choice) : /\b(no|false|disagree|decline)\b/.test(choice);
 }
 
@@ -255,6 +256,13 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
         control.click();
         items.push(item(field, 'filled', 'Applied locked profile screening answer'));
       }
+      continue;
+    }
+    if ((field.intent === 'work_authorization' || field.intent === 'requires_sponsorship') && control instanceof HTMLSelectElement) {
+      const answer = screeningAnswerForLabel(field.label, profile);
+      if (answer === undefined) items.push(item(field, 'blocked', 'Screening answer is not unambiguous in the profile'));
+      else if (setValue(control, answer ? 'Yes' : 'No', field.label)) items.push(item(field, 'filled', 'Applied locked profile screening answer'));
+      else items.push(item(field, 'blocked', 'No matching screening choice was available'));
       continue;
     }
     if ((field.intent === 'work_authorization' || field.intent === 'requires_sponsorship') && control.getAttribute('role') === 'combobox') {

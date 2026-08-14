@@ -21,7 +21,9 @@ export function profileValueForOccurrence(label: string, profile: CandidateProfi
   if (/github/.test(normalized)) return identity.links.github;
   if (/portfolio personal website website url/.test(normalized)) return identity.links.portfolio;
   if (/city/.test(normalized)) return identity.location.city;
+  if (/\b(state|province|region)\b/.test(normalized)) return identity.location.region;
   if (/country/.test(normalized)) return identity.location.country;
+  if (/notice period|notice time|available to start|availability/.test(normalized)) return profile.employment.notice_period;
   const experience = profile.experience[occurrence];
   const education = profile.education[occurrence];
   const isEducation = /\b(education|school|university|college|degree|major|field of study)\b/.test(normalized);

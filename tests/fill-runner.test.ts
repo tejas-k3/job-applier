@@ -111,4 +111,17 @@ describe('runFill', () => {
     expect((document.querySelector('select') as HTMLSelectElement).value).toBe('US');
     expect(result.items[0]?.state).toBe('filled');
   });
+
+  it('fills Workday-style region, notice period, and native screening selects', async () => {
+    document.body.innerHTML = `
+      <label>State or Province <select required><option value="">Choose</option><option value="TG">Telangana</option></select></label>
+      <label>Notice period <select required><option value="">Choose</option><option value="30">30 days</option></select></label>
+      <label>Are you authorized to work in India?<select required><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+      <label>Will you require sponsorship now or in the future?<select required><option value="">Choose</option><option value="yes">Yes</option><option value="no">No</option></select></label>`;
+
+    const result = await runFill(profile);
+
+    expect(Array.from(document.querySelectorAll('select')).map((control) => control.value)).toEqual(['TG', '30', 'yes', 'no']);
+    expect(result.items.every((entry) => entry.state === 'filled')).toBe(true);
+  });
 });

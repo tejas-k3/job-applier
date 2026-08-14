@@ -34,6 +34,7 @@ export function intentForLabel(label: string, kind: FieldKind, identifier = ''):
   if (/github/.test(label)) return 'github';
   if (/portfolio|personal website|website url/.test(label)) return 'portfolio';
   if (/\bcity\b/.test(label)) return 'city';
+  if (/\b(state|province|region)\b/.test(label)) return 'region';
   if (/\bcountry\b/.test(label)) return 'country';
   if (/sponsor|sponsorship|visa support/.test(label)) return 'requires_sponsorship';
   if (/authorized|authorised|right to work|work permit/.test(label)) return 'work_authorization';
