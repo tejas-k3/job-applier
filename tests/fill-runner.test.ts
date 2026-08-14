@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { runFill } from '../src/automation/fill-runner';
+import { prepareWorkdayRepeaters, runFill } from '../src/automation/fill-runner';
 import { emptyProfile, type CandidateProfile } from '../src/core/profile';
 
 const profile: CandidateProfile = {
@@ -123,5 +123,26 @@ describe('runFill', () => {
 
     expect(Array.from(document.querySelectorAll('select')).map((control) => control.value)).toEqual(['TG', '30', 'yes', 'no']);
     expect(result.items.every((entry) => entry.state === 'filled')).toBe(true);
+  });
+
+  it('adds unambiguous Workday work-history rows before filling them', async () => {
+    const twoJobs = { ...profile, experience: [profile.experience[0], { company: 'Globex', title: 'Senior Engineer', summary: 'Led platform work' }] };
+    document.body.innerHTML = `
+      <h1>My Experience</h1>
+      <section id="work-history">
+        <label>Company <input required></label>
+        <label>Job Title <input required></label>
+        <label>Description <textarea required></textarea></label>
+        <button type="button">Add Another Work Experience</button>
+      </section>`;
+    const section = document.querySelector('#work-history')!;
+    document.querySelector('button')!.addEventListener('click', () => {
+      section.insertAdjacentHTML('beforeend', '<label>Company <input required></label><label>Job Title <input required></label><label>Description <textarea required></textarea></label>');
+    }, { once: true });
+
+    await prepareWorkdayRepeaters(twoJobs);
+
+    expect(document.querySelectorAll('input')).toHaveLength(4);
+    expect(document.querySelectorAll('textarea')).toHaveLength(2);
   });
 });

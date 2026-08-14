@@ -161,6 +161,58 @@ function n26ApplyLink(): HTMLAnchorElement | undefined {
   );
 }
 
+type RepeaterKind = 'experience' | 'education';
+
+function visibleText(element: Element): string {
+  return normalizeText((element as HTMLElement).innerText || element.textContent || '');
+}
+
+function repeaterControlCount(kind: RepeaterKind): number {
+  const pattern = kind === 'experience'
+    ? /\b(company|employer|organization)\b/
+    : /\b(school|university|college|institution)\b/;
+  return inspectControls().filter(({ control }) => control.getClientRects().length && pattern.test(controlLabelText(control))).length;
+}
+
+function controlLabelText(control: Control): string {
+  return normalizeText([
+    ...Array.from(control.labels ?? []).map((label) => label.textContent ?? ''),
+    control.closest('label')?.textContent ?? '',
+    control.closest('fieldset')?.querySelector('legend')?.textContent ?? '',
+    control.getAttribute('aria-label') ?? '',
+    control.name
+  ].join(' '));
+}
+
+function workdayRepeaterButton(kind: RepeaterKind): HTMLButtonElement | undefined {
+  const kindText = kind === 'experience' ? 'work experience' : 'education';
+  const matches = Array.from(document.querySelectorAll<HTMLButtonElement>('button')).filter((button) => {
+    if (button.disabled || !button.getClientRects().length) return false;
+    const text = visibleText(button);
+    if (!/^(add another|add)\b/.test(text)) return false;
+    if (text.includes(kindText)) return true;
+    if (text !== 'add another' && text !== 'add') return false;
+    const context = visibleText(button.parentElement ?? button);
+    return context.includes(kindText) && !context.includes(kind === 'experience' ? 'education' : 'work experience');
+  });
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+export async function prepareWorkdayRepeaters(profile: CandidateProfile): Promise<void> {
+  for (const [kind, records] of [['experience', profile.experience], ['education', profile.education]] as const) {
+    let count = repeaterControlCount(kind);
+    while (count < records.length) {
+      const addButton = workdayRepeaterButton(kind);
+      if (!addButton) break;
+      addButton.click();
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      const nextCount = repeaterControlCount(kind);
+      if (nextCount <= count) break;
+      count = nextCount;
+    }
+  }
+}
+
 function userHandoffReason(): string | undefined {
   const visibleText = (document.body.innerText || document.body.textContent || '').toLowerCase().slice(0, 12000);
   if (/captcha|i am not a robot|recaptcha|hcaptcha/.test(visibleText)) return 'CAPTCHA requires candidate completion.';
@@ -205,6 +257,7 @@ export async function runFill(profile: CandidateProfile, resume?: ResumeRecord):
     };
   }
   const items: FillItem[] = [];
+  if (provider === 'workday' && stage === 'experience') await prepareWorkdayRepeaters(profile);
   const controls = inspectControls().filter(({ field }) => field.visible);
 
   if (provider === 'ashby') items.push(...fillAshbyVisaChoice(profile));
